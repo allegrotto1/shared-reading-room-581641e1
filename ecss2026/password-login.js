@@ -2,37 +2,27 @@
 const form=document.getElementById('login'),input=document.getElementById('password'),status=document.getElementById('status'),submit=document.getElementById('submit'),show=document.getElementById('show');
 const bytes=s=>Uint8Array.from(atob(s.replace(/-/g,'+').replace(/_/g,'/')),c=>c.charCodeAt(0));
 const encode=b=>btoa(String.fromCharCode(...new Uint8Array(b))).replace(/\+/g,'-').replace(/\//g,'_').replace(/=+$/,'');
-const isHome=()=>false; // ECSS standalone workspace; Home remains protected at ../
+const isHome=()=>false; // Valid capability links also open the project index.
+const sessionSlot='studio-session:'+location.pathname.replace(/(?:ecss2026\/)?[^/]*$/, '');
 let busy=false;
 function message(text,error=false){status.textContent=text;status.dataset.error=String(error);input.setAttribute('aria-invalid',String(error));}
 function working(on){busy=on;submit.disabled=on;input.disabled=on;show.disabled=on;form.setAttribute('aria-busy',String(on));submit.textContent=on?'正在開啟…':'開啟主頁 →';}
 show.onclick=()=>{const visible=input.type==='password';input.type=visible?'text':'password';show.textContent=visible?'隱藏':'顯示';show.setAttribute('aria-label',visible?'隱藏密碼':'顯示密碼');show.setAttribute('aria-pressed',String(visible));input.focus();};
 
-// Runs before the decrypted application's routers. Authorization lasts only
-// while the user remains on Home; no password or approval is stored.
-function installHomeGate(passwordEntry){
- if(/\/ecss2026\//.test(location.pathname))return; // isolated workspace routing
- const home=()=>{const view=new URLSearchParams(location.hash.slice(1)).get('view');return !view||view==='projects';};
- let permitted=passwordEntry&&home(),leaving=false;
- const lock=()=>{
-  if(leaving)return;leaving=true;
-  document.documentElement.style.visibility='hidden';
-  history.replaceState(null,'',location.pathname+location.search+'#view=projects');
+// Keep the capability in this tab only; explicit Lock clears it. No password is stored.
+function installHomeGate(){
+ const scope=location.pathname.replace(/(?:ecss2026\/)?[^/]*$/, ''), slot='studio-session:'+scope;
+ let locking=false;
+ const lock=()=>{if(locking)return;locking=true;
+  try{sessionStorage.removeItem(slot);sessionStorage.setItem(slot+':locked','1');}catch{}
+  const params=new URLSearchParams(location.hash.slice(1));params.delete('key');
+  history.replaceState(null,'',location.pathname+location.search+'#'+params.toString());
   location.reload();
  };
- const check=()=>{if(!home()){permitted=false;return;}if(!permitted)lock();};
- for(const name of ['pushState','replaceState']){
-  const original=history[name];
-  history[name]=function(...args){const result=original.apply(this,args);if(!leaving)check();return result;};
- }
- window.addEventListener('hashchange',check,true);
- window.addEventListener('popstate',check,true);
- window.addEventListener('pageshow',event=>{if(event.persisted&&home())lock();},true);
  document.addEventListener('click',event=>{
-  const target=event.target.closest?.('[data-studio-action="home"],#tkHome,#studioLock');
-  if(target&&(!permitted||target.id==='studioLock')){event.preventDefault();event.stopImmediatePropagation();lock();}
+  if(event.target.closest?.('#studioLock')){event.preventDefault();event.stopImmediatePropagation();lock();}
  },true);
- check();
+ window.addEventListener('pageshow',()=>{try{if(sessionStorage.getItem(slot+':locked')==='1')lock();}catch{}},true);
 }
 
 async function open(secret,passwordEntry=false){
@@ -43,11 +33,13 @@ async function open(secret,passwordEntry=false){
  let html=await new Response(new Blob([compressed]).stream().pipeThrough(new DecompressionStream('gzip'))).text();
  // A navigation can happen while decryption is pending. Recheck the route.
  if(!passwordEntry&&isHome()){working(false);message('返回研究室主頁，請輸入密碼。');return;}
+ try{sessionStorage.setItem(sessionSlot,secret);sessionStorage.removeItem(sessionSlot+':locked');}catch{}
  const params=new URLSearchParams(location.hash.slice(1));params.set('key',secret);if(!params.has('view'))params.set('view','projects');
  history.replaceState(null,'',location.pathname+location.search+'#'+params.toString());input.value='';
  const lock='<button type="button" id="studioLock" data-language-preserve>鎖定 / Lock</button>';
  html=html.replace('<div class="studio-actions">','<div class="studio-actions">'+lock);
- // Inline the gate before any application script, without embedding secrets.
+ if(!html.includes('id="studioLock"'))html=html.replace('</header>',lock+'</header>');
+ // Inline explicit locking before application scripts, without embedding secrets.
  html=html.replace('<head>','<head><script>('+installHomeGate.toString()+')('+JSON.stringify(passwordEntry)+');<\/script>');
  document.open();document.write(html);document.close();
 }
@@ -59,8 +51,11 @@ form.onsubmit=async e=>{e.preventDefault();if(busy||!input.value)return;working(
  }catch{working(false);message('未能解鎖，請檢查密碼後再試。',true);input.focus();input.select();}};
 function openShareLink(){
  if(isHome()){if(!busy)message('返回研究室主頁，請輸入密碼。');return;}
- const secret=new URLSearchParams(location.hash.slice(1)).get('key');
+ let secret=new URLSearchParams(location.hash.slice(1)).get('key');
+ if(!secret){try{secret=sessionStorage.getItem(sessionSlot);}catch{}}
  if(secret&&!busy){working(true);message('正在開啟分享的工作平台…');open(secret).catch(()=>{working(false);message('分享連結未能解鎖，請檢查完整連結或輸入密碼。',true);input.focus();});}
 }
 window.addEventListener('hashchange',openShareLink);openShareLink();
 })();
+
+
