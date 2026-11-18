@@ -1,4 +1,4 @@
-import {enter,readFile} from './storage12.js';
+import {enter,readFile,transportHealth} from './storage12.js';
 import {Navigation} from './nav-floor.js';
 import {CaptureField} from './field.js';
 import {lookAt,stepManual,stepGuide,destinations,previewPath} from './guide.js';
@@ -87,7 +87,7 @@ function frame(now){
 }
 function state(timings=true){
   const a=engine._adapter?.info;
-  return {eye:[...view.xy,layout.eyeHeight],yaw:view.yaw,pitch:view.pitch,vfov,width:engine.getRenderWidth(),height:engine.getRenderHeight(),backend:engine.name,adapter:a?[a.vendor,a.architecture,a.description].filter(Boolean).join(' / '):engine.getGlInfo?.().renderer,active:sources.active.slice(),resident:sources.cache.size,tiles:[...sources.tiles.keys()],zone:nav.zone(view.xy).id,walking:route.points.length>0,waitEvents,sourceWaitMs:Math.round(waitMs+(waitStart?performance.now()-waitStart:0)),frameTimes:timings?stats.slice():[]};
+  return {eye:[...view.xy,layout.eyeHeight],yaw:view.yaw,pitch:view.pitch,vfov,width:engine.getRenderWidth(),height:engine.getRenderHeight(),backend:engine.name,adapter:a?[a.vendor,a.architecture,a.description].filter(Boolean).join(' / '):engine.getGlInfo?.().renderer,active:sources.active.slice(),resident:sources.cache.size,tiles:[...sources.tiles.keys()],zone:nav.zone(view.xy).id,walking:route.points.length>0,waitEvents,sourceWaitMs:Math.round(waitMs+(waitStart?performance.now()-waitStart:0)),media:timings?{recovered:[...transportHealth.recovered],failed:[...transportHealth.failed]}:undefined,frameTimes:timings?stats.slice():[]};
 }
 function guide(to,destination=null){
   if(!ready)return;
