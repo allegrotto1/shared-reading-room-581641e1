@@ -1,7 +1,7 @@
 export const destinations=[
- ['board','青框白板',[2.31,-1.993,1.0]],['reception','入口及接待',[-.52,-4.,1.45]],['plant','黃金樹',[-1.436,-2.68,1.08]],
- ['office','辦公座位',[-2.50,-.64,1.05]],['copier','影印機',[-.23,.29,.95]],['pantry','茶水位',[3.99,-1.12,1.20]],
- ['meeting','會議室',[1.83,5.02,.99]],['window','會議室窗邊',[2.10,9.50,1.89]]
+ ['board','Teal-framed whiteboard',[2.31,-1.993,1.0]],['reception','Reception',[-.52,-4.,1.45]],['plant','ZZ plant',[-1.436,-2.68,1.08]],
+ ['office','Workstations',[-2.50,-.64,1.05]],['copier','Copier',[-.23,.29,.95]],['pantry','Pantry',[3.99,-1.12,1.20]],
+ ['meeting','Meeting room',[1.83,5.02,.99]],['window','Meeting room window',[2.10,9.50,1.89]]
 ];
 // Locate future points along the same route used for walking, including its corners.
 export function previewPath(start,waypoints,distances){

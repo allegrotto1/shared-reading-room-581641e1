@@ -11,7 +11,7 @@ let B,engine,scene,cam,geo,material,layout,nav,field,sources,drag,ready=false,ma
 const unzip=bytes=>new Response(new Blob([bytes]).stream().pipeThrough(new DecompressionStream('gzip'))).arrayBuffer();
 async function engineBundle(){
   const response=await fetch('../vendor/babylon/babylon-9.37.0.js.gz');
-  if(!response.ok)throw Error('Babylon.js 未能載入');
+  if(!response.ok)throw Error('Babylon.js could not load');
   const bin=await new Response(response.body.pipeThrough(new DecompressionStream('gzip'))).blob();
   const url=URL.createObjectURL(new Blob([bin],{type:'text/javascript'}));
   try{await new Promise((resolve,reject)=>{const s=document.createElement('script');s.src=url;s.onload=resolve;s.onerror=reject;document.head.append(s);});}
@@ -22,10 +22,10 @@ function loading(msg,p){$('#status').textContent=msg;$('progress').value=p;}
 
 function geometry(buffer){
   const h=new DataView(buffer);
-  if(h.getUint32(0,true)!==0x31524257)throw Error('幾何資料版本不符');
+  if(h.getUint32(0,true)!==0x31524257)throw Error('Unexpected geometry version');
   const n=h.getUint32(4,true),m=h.getUint32(8,true);
   const pos=new Float32Array(buffer,16,n*3),layer=new Float32Array(buffer,16+n*12,n),index=new Uint32Array(buffer,16+n*16,m);
-  if(16+n*16+m*4!==buffer.byteLength)throw Error('幾何資料不完整');
+  if(16+n*16+m*4!==buffer.byteLength)throw Error('Incomplete scene geometry');
   geo=new B.Mesh('POD office · Cycles geometry',scene);
   geo.setVerticesData('position',pos,false,3);geo.setVerticesData('boardFace',layer,false,1);geo.setIndices(index);
   geo.material=material;geo.freezeWorldMatrix();
@@ -65,12 +65,12 @@ function step(dt){
       const test=[view.xy[0]+dt*1.5*dx,view.xy[1]+dt*1.5*dy];
       if(nav.safe(test)&&sources.coverage(test)<.52){
         if(!waitStart){waitStart=performance.now();waitEvents++;}
-        if(performance.now()-waitStart>350){$('#hint').textContent='正在載入前面嘅原畫';blocked=true;}
+        if(performance.now()-waitStart>350){$('#hint').textContent='Loading the view ahead…';blocked=true;}
         return;
       }
     }
   }else sources?.predict(null);
-  if(waitStart){waitMs+=performance.now()-waitStart;waitStart=0;if(blocked){$('#hint').textContent='拖曳環視 · 點地面行走';blocked=false;}}
+  if(waitStart){waitMs+=performance.now()-waitStart;waitStart=0;if(blocked){$('#hint').textContent='Drag to look · Tap to walk';blocked=false;}}
 
   if(stepManual(view,keys,nav,dt)){route.points=[];dirty=true;}
   else if(route.points.length){stepGuide(view,route,nav,dt,layout.eyeHeight);dirty=true;}
@@ -156,10 +156,10 @@ async function boot(){
   scene.imageProcessingConfiguration.toneMappingEnabled=false;
   cam=new B.FreeCamera('Visitor',B.Vector3.Zero(),scene);cam.minZ=.025;cam.maxZ=1050;scene.activeCamera=cam;
   material=projectionMaterial(B,scene,engine.isWebGPU===true);
-  sources=new SourceTextures(B,scene,material,field,mobile,()=>dirty=true);loading('正在載入附近嘅 Cycles 原畫',28);
+  sources=new SourceTextures(B,scene,material,field,mobile,()=>dirty=true);loading('Loading nearby Cycles views…',28);
   const [mesh,ink,world]=await Promise.all([readFile('geometry.bin.gz').then(unzip),sources.colour('board.png'),sources.colour('world.png'),sources.settle(view.xy,false)]);
   geometry(mesh);material.setTexture('inkBoard',ink);material.setTexture('exteriorWorld',world);
-  setupMap();loading('正在對齊視角',88);aim();sources.bind(view.xy,true);
+  setupMap();loading('Aligning the view…',88);aim();sources.bind(view.xy,true);
   await material.forceCompilationAsync(geo);draw(true);
   if(gpuDevice){
     await gpuDevice.queue.onSubmittedWorkDone();
@@ -176,8 +176,8 @@ async function boot(){
       resume:()=>{manual=false;stop();$('#viewer').classList.remove('measuring');last=performance.now();}};
   }
   if(qs.has('device')){const el=document.createElement('output');el.className='glass';el.style.cssText='right:12px;top:57px;padding:8px;max-width:70vw;pointer-events:none';$('#viewer').append(el);
-   function update(){const sort=stats.slice().sort((a,b)=>a-b);el.textContent=engine.name+' · '+engine.getRenderWidth()+' × '+engine.getRenderHeight()+(sort.length>4?' · '+[.5,.95].map(q=>sort[Math.floor(q*(sort.length-1))].toFixed(1)).join(' / ')+' ms (P50/P95)':' · 行兩步量度畫格時間');}
+   function update(){const sort=stats.slice().sort((a,b)=>a-b);el.textContent=engine.name+' · '+engine.getRenderWidth()+' × '+engine.getRenderHeight()+(sort.length>4?' · '+[.5,.95].map(q=>sort[Math.floor(q*(sort.length-1))].toFixed(1)).join(' / ')+' ms (P50/P95)':' · Walk to measure frame time');}
    update();setInterval(update,500);}
   last=performance.now();requestAnimationFrame(frame);
 }
-boot().catch(e=>{console.error(e);loading('辦公室未能載入，請重試。',0);$('#retry').hidden=false;document.body.dataset.error=String(e);});
+boot().catch(e=>{console.error(e);loading('The office could not load. Please try again.',0);$('#retry').hidden=false;document.body.dataset.error=String(e);});

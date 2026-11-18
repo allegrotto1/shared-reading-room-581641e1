@@ -21,7 +21,7 @@ export class CaptureField{
     const e=new Map();
     for(const tri of this.rows)for(let i=0;i<3;i++){const pair=[tri[i],tri[(i+1)%3]].sort((a,b)=>a-b),k=pair.join('/');if(e.has(k))e.delete(k);else e.set(k,pair);}
     this.border=[...e.values()];
-    if(distances.length!==this.grid.rows*this.grid.cols*this.locations.length)throw Error('漫遊位置資料不完整');
+    if(distances.length!==this.grid.rows*this.grid.cols*this.locations.length)throw Error('Incomplete walking-area data');
   }
   cells(p){
     const g=this.grid,fx=(p[0]-g.left)/g.step-.5,fy=(p[1]-g.bottom)/g.step-.5,c=Math.floor(fx),r=Math.floor(fy),x=fx-c,y=fy-r,out=[];

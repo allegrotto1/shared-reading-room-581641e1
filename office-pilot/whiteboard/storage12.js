@@ -19,7 +19,7 @@ export async function enter(proof=false){
 }
 export async function readFile(id){
   const row=sealed?table[id]:null;
-  if(sealed&&!row)throw Error('樣板檔案未登記');
+  if(sealed&&!row)throw Error('This office file is missing from the catalog');
   const uri=sealed?new URL(row[0],location.href):new URL('./data/'+id,location.href);
   const endpoints=[{url:uri}];
   if(sealed){
@@ -36,7 +36,7 @@ export async function readFile(id){
         headers:entry.accept?{Accept:entry.accept}:{},signal:globalThis.AbortSignal?.timeout?.(row&&row[1]>5000000?120000:30000)});
       if(!res.ok)throw Error('HTTP '+res.status+' · '+id);
       const bytes=new Uint8Array(await res.arrayBuffer());
-      if(row && bytes.length!==row[1]+28)throw Error('下載未完整');
+      if(row && bytes.length!==row[1]+28)throw Error('Incomplete download');
       const plain=sealed?new Uint8Array(await crypto.subtle.decrypt({name:'AES-GCM',iv:bytes.subarray(0,12),additionalData:encoder.encode('whiteboard/'+id)},key,bytes.subarray(12))):bytes;
       if(i)transportHealth.recovered.add(id);transportHealth.failed.delete(id);return plain;
     }catch(e){
