@@ -1,5 +1,5 @@
 import * as THREE from 'three';
-import {loadMedia, readMedia} from './media.js?rev=lighting7';
+import {loadMedia, readMedia} from './media.js?rev=lighting7b';
 
 async function readDiffuseFields(textureLoader, pose) {
   return Promise.all(['origin','side'].map(async key=>{
