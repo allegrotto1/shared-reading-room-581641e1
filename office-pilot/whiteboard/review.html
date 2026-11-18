@@ -1,0 +1,13 @@
+<!doctype html>
+<html data-protected lang="zh-Hant"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="referrer" content="no-referrer"><meta name="robots" content="noindex,nofollow"><meta name="theme-color" content="#f7f6f1"><link rel="icon" href="data:,"><title>青框白板 · 漫遊實測</title><link rel="stylesheet" href="./review.css"></head>
+<body><main><nav><a href="./">← 行到白板前</a><a href="./?device=1">量度呢部裝置 ↗</a></nav>
+<header><h1>白板前，行兩步</h1><p>同一條路線，左邊係 Cycles 獨立重渲，右邊係 Babylon.js 漫遊實際畫面。試睇橫移半米嗰段，屏風側邊露出後面張椅。</p></header>
+<p id="status" role="status">正在開啟實測紀錄…</p>
+<div id="report" hidden><figure class="film"><video id="film" controls playsinline preload="metadata" aria-label="Blender Cycles 與 Babylon.js 同軌跡並排短片"></video><figcaption id="film-caption"></figcaption></figure>
+<section><h2>同機位量度</h2><dl id="metrics"></dl><p id="method"></p></section>
+<section><h2>原尺寸細節</h2><p>每組左邊係 Cycles，右邊係漫遊。按圖片或標題可開啟原尺寸 PNG。</p><div id="crops"></div></section>
+<section><h2>行走畫面點樣生成</h2><p>十四個 4096 × 2048 全景由 Blender 5.3 Cycles 直接渲染，跟每張相輸出深度及相機位置。保留 v10 嘅燈光、材質及 AgX 色彩，網頁用 Babylon.js 將附近幾個機位嘅像素投影返真實幾何。玻璃、屏風及枱櫃都按深度測試遮擋。離開採樣點後，每一格都係重建視角。</p><p>筆跡逐筆畫入「Reception partition calendar」專屬材質。近睇時，板面用獨立 Cycles 正投影補回筆尖細節。側望、停步同門框遮擋，都由同一塊板嘅三維位置決定。</p>
+<p id="observations"></p></section>
+<section><h2>裝置同畫格時間</h2><dl id="devices"></dl><p>數字係行走期間瀏覽器畫格之間嘅時間。手機版採用觸控輸入。實體 iPhone / Android 數字待真機量度。按「量度呢部裝置」可直接睇繪圖尺寸、畫格時間中位數同第 95 百分位。</p></section>
+<section><h2>逐格 Cycles 串流估算</h2><p id="stream"></p><p>租用一部 24 GB NVIDIA A10 作試機，Lambda 公開價係每 GPU 小時 US$1.29。單機用 100 小時係 US$129，未計其他費用。A10 嘅本場景速度同香港用戶網絡延遲尚待實測。 <a href="https://lambda.com/instances" target="_blank" rel="noreferrer">Lambda 官方價格 ↗</a></p></section>
+<section id="downloads"><h2>編輯同覆核</h2><button id="blend">下載可編輯 Blender 檔 · 288 MiB</button> <button id="cams">下載相機參數同驗收路線</button><p id="download-status" aria-live="polite"></p></section></div></main><script type="module" src="./review.js"></script></body></html>
