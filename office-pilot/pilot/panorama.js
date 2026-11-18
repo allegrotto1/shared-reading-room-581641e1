@@ -1,5 +1,5 @@
 import * as THREE from 'three';
-import {loadMedia} from './media.js';
+import {loadMedia} from './media.js?rev=lighting7';
 
 const columns = 8, rows = 4, size = 1024, border = 4;
 const names = ['origin', 'side'];

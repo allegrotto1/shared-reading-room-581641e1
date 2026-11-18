@@ -1,5 +1,5 @@
 import * as THREE from 'three';
-import {loadMedia, readMedia} from './media.js';
+import {loadMedia, readMedia} from './media.js?rev=lighting7';
 
 async function readDiffuseFields(textureLoader, pose) {
   return Promise.all(['origin','side'].map(async key=>{
@@ -96,14 +96,15 @@ const sampleDiffuseField = `
     return vec4(texture2D(lightData,uv).rgb*4.*w,w);
   }`;
 
-// A fixed rectangular ceiling panel illuminates the moving specular lobe; baked diffuse remains independent.
+// Integrate the six photographed panels, using the lens dimensions in the Blender working file.
 const practicalSpecular = `
   vec3 podCeilingSpecular(vec3 N,vec3 V,float r,vec3 F0) {
     float nv=max(dot(N,V),.001);
     float a=max(.22,r); float a2=a*a*a*a;
     vec3 sum=vec3(0.);
-    for(int ix=0;ix<3;ix++) for(int iz=0;iz<3;iz++) {
-      vec3 lamp=vec3(-.10+(float(ix)-1.)/3.,2.57,1.50+(float(iz)-1.)*.49/3.);
+    for(int panel=0;panel<6;panel++) for(int sampleID=0;sampleID<4;sampleID++) {
+      vec2 offset=vec2(sampleID%2==0?-.288675:.288675,sampleID<2?-.288675:.288675)*podPanelSize[panel];
+      vec3 lamp=podPanels[panel]+vec3(offset.x,0.,offset.y);
       vec3 delta=lamp-vPodWorld;float d2=dot(delta,delta);
       vec3 L=delta*inversesqrt(max(.001,d2));float nl=max(dot(N,L),0.);
       vec3 H=normalize(L+V);float nh=max(dot(N,H),0.); float vh=max(dot(V,H),0.);
@@ -111,7 +112,7 @@ const practicalSpecular = `
       float D=a2/(3.14159*denom*denom);
       float visibility=.5/max(.003,nl*sqrt(a2+(1.-a2)*nv*nv)+nv*sqrt(a2+(1.-a2)*nl*nl));
       vec3 F=F0+(1.-F0)*pow(1.-vh,5.);
-      sum+=F*(D*visibility*nl*max(L.y,0.)*.49/(9.*max(.12,d2)));
+      sum+=F*(D*visibility*nl*max(L.y,0.)*podPanelSize[panel].x*podPanelSize[panel].y/(4.*max(.12,d2)));
     }
     return vec3(7.2,5.6,4.15)*sum;
   }`;
@@ -119,7 +120,7 @@ const practicalSpecular = `
 export function attachFinish(mat, inputs, pose, kind) {
   const floor = kind === 'floor';
   const localEnv = kind === 'door' || kind === 'hardware';
-  const sampled = mat.isMeshStandardMaterial&&!mat.transparent&&!(mat.transmission>.08)&&mat.metalness<.6&&
+  const sampled = kind!=='shell'&&kind!=='lighting'&&mat.isMeshStandardMaterial&&!mat.transparent&&!(mat.transmission>.08)&&mat.metalness<.6&&
     !/diffuser|lightbox|exit face|transmitted light|entrance glass|reflective band|door etch/i.test(mat.name);
   const extraDiffuse=kind==='hardware'&&mat.isMeshStandardMaterial&&!mat.transparent&&mat.metalness<.65&&
     !/transmitted light|white exit face|wall infill|warm white/i.test(mat.name);
@@ -150,6 +151,7 @@ export function attachFinish(mat, inputs, pose, kind) {
     'uniform highp sampler3D podViewLut;',
     'uniform vec3 podProbe, podBoxMin, podBoxMax;'];
   if(floor) declarations.push('uniform sampler2D podCarpet, podFibers;');
+  if(directSpec||extraDiffuse) declarations.push('uniform vec3 podPanels[6]; uniform vec2 podPanelSize[6];');
   if(directSpec) declarations.push(practicalSpecular);
   if(sampled)declarations.push('uniform sampler2D podDiffuseA,podDepthA,podDiffuseB,podDepthB;',
     'uniform mat4 podProjectionA,podProjectionB; uniform vec3 podOriginA,podOriginB;',sampleDiffuseField);
@@ -159,6 +161,10 @@ export function attachFinish(mat, inputs, pose, kind) {
       podProbe:{value:new THREE.Vector3(pose.probe[0],pose.probe[2],-pose.probe[1])},
       podBoxMin:{value:new THREE.Vector3(...pose.probeBounds[0])},podBoxMax:{value:new THREE.Vector3(...pose.probeBounds[1])}
     });
+    if(directSpec||extraDiffuse) {
+      shader.uniforms.podPanels={value:pose.officePanels.map(panel=>new THREE.Vector3(...panel.center))};
+      shader.uniforms.podPanelSize={value:pose.officePanels.map(panel=>new THREE.Vector2(...panel.size))};
+    }
     if(sampled) {
       for (const [i,suffix] of [[0,'A'],[1,'B']]) {
         const field=inputs.fields[i];
@@ -179,12 +185,13 @@ export function attachFinish(mat, inputs, pose, kind) {
     if (extraDiffuse) {
       const localDiffuse=[
         '#include <lights_fragment_end>',
-        'vec3 lightVec=vec3(-.10,2.57,1.50)-vPodWorld;',
+        'for(int panel=0;panel<6;panel++){',
+        'vec3 lightVec=podPanels[panel]-vPodWorld;',
         'float dist2=dot(lightVec,lightVec);',
         'vec3 L=normalize(lightVec);',
         'float receiver=max(dot(normal,normalize(mat3(viewMatrix)*L)),0.);',
         'float emitter=max(L.y,0.);',
-        'reflectedLight.directDiffuse+=diffuseColor.rgb*(1.-metalnessFactor)*vec3(1.0,.82,.65)*(1.05*receiver*emitter/(dist2+.24));'
+        'reflectedLight.directDiffuse+=diffuseColor.rgb*(1.-metalnessFactor)*vec3(1.0,.91,.78)*(1.4*podPanelSize[panel].x*podPanelSize[panel].y*receiver*emitter/(dist2+.24));}'
       ].join('\n');
       frag=frag.replace('#include <lights_fragment_end>',localDiffuse);
     }
@@ -235,6 +242,6 @@ export function attachFinish(mat, inputs, pose, kind) {
     ].join('\n');
     shader.fragmentShader=frag.replace('#include <tonemapping_fragment>',display);
   };
-  mat.customProgramCacheKey=()=> 'pod-copier-pilot-4-'+kind+(sampled?'-diffuse':'-pbr')+(extraDiffuse?'-lamp':'')+(directSpec?'-spec':'');
+  mat.customProgramCacheKey=()=> 'pod-lighting-v7-'+kind+(sampled?'-diffuse':'-pbr')+(extraDiffuse?'-lamp':'')+(directSpec?'-spec':'');
   mat.needsUpdate=true;
 }

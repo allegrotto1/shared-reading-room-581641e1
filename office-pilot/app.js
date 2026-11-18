@@ -4,9 +4,9 @@ import {DRACOLoader} from 'three/addons/loaders/DRACOLoader.js';
 import {HDRLoader} from 'three/addons/loaders/HDRLoader.js';
 import {mergeGeometries} from 'three/addons/utils/BufferGeometryUtils.js';
 import {Navigation} from './nav.js';
-import {getPilotInputs, isDoor, adjustDoor, attachFinish} from './pilot/shading.js';
-import {enterPilot, loadMedia, readMedia} from './pilot/media.js';
-import {PanoramaViewer} from './pilot/panorama.js';
+import {getPilotInputs, isDoor, adjustDoor, attachFinish} from './pilot/shading.js?rev=lighting7';
+import {enterPilot, loadMedia, readMedia} from './pilot/media.js?rev=lighting7';
+import {PanoramaViewer} from './pilot/panorama.js?rev=lighting7';
 const $=s=>document.querySelector(s),canvas=$('#scene'),map=$('#map');
 let layout,nav,pos=[0,0],yaw=0,pitch=0,path=[],ready=false,renderer,scene,camera,model,keys=new Set(),movingTouch='',loadedAt=0,frames=[],totalFrames=0,last=performance.now(),mapTime=0;
 const started=0,review=new URLSearchParams(location.search).has('review'),diagnostics=$('#diagnostics');
@@ -27,7 +27,7 @@ function optimize(root,probes,pass='base'){
   const g=o.geometry.clone().applyMatrix4(o.matrixWorld);
   const door=pass==='base'&&isDoor(o.name);
   if(door)adjustDoor(g,o.name);
-  const kind=pass==='shell'?(/carpet/i.test(o.name)?'floor':'shell'):pass==='fixtures'?'fixture':pass==='hardware'?'hardware':door?'door':source.name.includes('architecture_office')?'floor':'room';
+  const kind=pass==='shell'?(/carpet/i.test(o.name)?'floor':'shell'):pass==='lighting'?'lighting':pass==='fixtures'?'fixture':pass==='hardware'?'hardware':door?'door':source.name.includes('architecture_office')?'floor':'room';
   for(const k of Object.keys(g.attributes))if(!['position','normal','uv','uv1','tangent','color'].includes(k))g.deleteAttribute(k);
   const key=source.uuid+region+kind+Object.keys(g.attributes).sort().join(',')+!!g.index;
   if(!groups.has(key)){
@@ -76,9 +76,9 @@ async function boot(){try{
  const draco=new DRACOLoader();draco.setDecoderPath('./vendor/examples/jsm/libs/draco/gltf/');draco.setWorkerLimit(2);
  const loader=new GLTFLoader().setDRACOLoader(draco);
  const pmrem=new THREE.PMREMGenerator(renderer);pmrem.compileEquirectangularShader();
- const [gltf,probes,pilotInputs]=await Promise.all([loadMedia(loader,'./pilot/office-context.glb',e=>progress(8+Math.min(69,e.total?e.loaded/e.total*69:30),'正在載入高清樣板')),loadProbes(pmrem),getPilotInputs(renderer,loader,new HDRLoader(),pmrem,pilot)]);
+ const [gltf,probes,pilotInputs,lighting]=await Promise.all([loadMedia(loader,'./pilot/office-context.glb',e=>progress(8+Math.min(69,e.total?e.loaded/e.total*69:30),'正在載入高清樣板')),loadProbes(pmrem),getPilotInputs(renderer,loader,new HDRLoader(),pmrem,pilot),loadMedia(loader,'./pilot/ceiling-v7.glb')]);
  inputs=pilotInputs;pmrem.dispose();draco.dispose();
- model=optimize(gltf.scene,probes);model.add(optimize(inputs.shell,probes,'shell'),optimize(inputs.fixtures,probes,'fixtures'),optimize(inputs.hardware,probes,'hardware'));
+ model=optimize(gltf.scene,probes);model.add(optimize(inputs.shell,probes,'shell'),optimize(inputs.fixtures,probes,'fixtures'),optimize(inputs.hardware,probes,'hardware'),optimize(lighting.scene,probes,'lighting'));
  scene.add(model);resize();makeMap();setMap(false);
  panorama=new PanoramaViewer(renderer,pilot.yaw,()=>{dirtyFrame=true;},showTileStatus);
  camera.position.set(pos[0],layout.eyeHeight,-pos[1]);camera.rotation.set(pitch,yaw,0);
@@ -411,7 +411,7 @@ function animate(now) {
   if(now-previousDiagnostic>500) {
     previousDiagnostic=now;
     const fps=frames.length/frames.reduce((a,b)=>a+b,0);
-    const perf={version:'copier-v6-panorama',mode:panorama.active?'original':'walk',station:panorama.active,
+    const perf={version:'copier-v7-lighting',mode:panorama.active?'original':'walk',station:panorama.active,
       visibleTiles:panorama.visibleCount,readyTiles:panorama.loadedCount,fov:camera.fov,ready:true,
       visible:document.visibilityState,focused:document.hasFocus(),position:pos.map(x=>+x.toFixed(3)),
       yaw:+yaw.toFixed(3),pitch:+pitch.toFixed(3),area:nav.zone(pos).label,walking:path.length>0||!!slide,
