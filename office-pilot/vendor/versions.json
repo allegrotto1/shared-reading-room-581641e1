@@ -1,0 +1,6 @@
+{
+  "source": "npm official package via jsDelivr",
+  "three": "0.187.0",
+  "components": ["core", "GLTFLoader", "DRACOLoader", "HDRLoader", "BufferGeometryUtils", "Draco glTF decoder"],
+  "licenses": ["LICENSE", "DRACO-LICENSE"]
+}

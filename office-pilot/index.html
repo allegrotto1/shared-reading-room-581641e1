@@ -1,0 +1,36 @@
+<!doctype html>
+<html lang="zh-Hant" data-research-studio><head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="robots" content="noindex,nofollow"><meta name="referrer" content="no-referrer"><meta name="theme-color" content="#18253d"><meta name="description" content="民思政策研究所辦公室立體漫遊，從影印機旁望向大門。">
+<title>POD 民思政策研究所 · 影印機旁漫遊</title>
+<link rel="icon" href="./favicon.svg" type="image/svg+xml"><link rel="stylesheet" href="./pilot/walk-ui.css">
+<script type="importmap">{"imports":{"three":"./vendor/build/three.module.js","three/addons/":"./vendor/examples/jsm/"}}</script>
+</head><body>
+<main aria-label="POD 全辦公室三維漫遊"><canvas id="scene" tabindex="0" aria-label="辦公室三維漫遊，拖曳環視，點地面行走"></canvas></main>
+<aside id="mapPanel" class="plan" aria-label="平面導覽">
+  <header><button id="mapToggle" type="button" title="收起或展開平面圖" aria-controls="planBody" aria-expanded="true">平面導覽</button><span id="mapHint">點擊移動</span><button id="expandMap" type="button" title="放大或縮小平面圖（M）" aria-expanded="false" aria-label="放大平面圖">⤢</button></header>
+  <div id="planBody"><svg id="map" viewBox="0 0 300 274" role="img" aria-label="POD 辦公室平面圖、目前位置及朝向"></svg>
+    <div class="plan-tools">
+      <div id="destinations" aria-label="按區域前往"></div>
+      <div class="view-actions"><button id="origin" type="button">回到取景位</button><button id="halfStep" type="button">橫移半米</button><button id="home" type="button">返回入口</button><a href="../#view=office-log&amp;panel=pilot">畫質對照 ↗</a><button id="fullscreen" type="button">全螢幕</button><button id="help" type="button">操作說明</button></div>
+    </div>
+  </div>
+</aside>
+<div class="location" aria-live="polite"><span>目前位置</span><strong id="area">辦公座位區</strong></div>
+<section id="viewDock" aria-label="觀看模式">
+  <div class="view-switch" role="group" aria-label="切換畫面"><button id="walkMode" type="button" aria-pressed="true">自由行</button><button id="originalMode" type="button" aria-pressed="false" disabled>睇 Blender 原畫</button></div>
+  <div id="stationBar" hidden>
+    <div class="station-switch" role="group" aria-label="Blender 全景取景位"><button type="button" data-station="origin" aria-pressed="false">影印機旁</button><button type="button" data-station="side" aria-pressed="false">向右半米</button></div>
+    <div class="pano-info"><span id="panoQuality" role="status"></span><button id="retryPano" type="button" hidden>重試</button><span class="pano-zoom"><button type="button" id="panoZoomOut" aria-label="縮小原畫">−</button><button type="button" id="panoZoomIn" aria-label="放大原畫">＋</button></span></div>
+  </div>
+</section>
+<div id="hint" aria-label="漫遊操作"><span><kbd>拖曳</kbd> 環視</span><span><kbd>點地板</kbd> 走過去</span><span><kbd>W A S D</kbd> ／ <kbd>方向鍵</kbd> 移動</span><span><kbd>Q E</kbd> 轉向</span><span><kbd>Shift</kbd> 加速</span><span><kbd>滾輪</kbd> 前後</span></div>
+<div id="touchHint">拖曳環視　點地板行走</div>
+<div id="originalHint" hidden>拖曳<span class="keyboard-hint">或方向鍵</span>環視 360°　＋／− 看細節</div>
+<div id="touchPad" aria-label="觸控移動"><button data-dir="forward" aria-label="向前移動">↑</button><button data-dir="left" aria-label="向左移動">←</button><button data-dir="back" aria-label="向後移動">↓</button><button data-dir="right" aria-label="向右移動">→</button></div>
+<div id="toast" role="status" aria-live="polite"></div>
+<section id="loading"><div class="load-box"><div id="loadMessage">載入辦公室模型</div><div class="load-track"><i id="loadBar"></i></div><output id="loadPercent">0%</output><button id="retry" hidden>重新載入</button></div></section>
+<dialog id="helpDialog"><button id="closeHelp" aria-label="關閉操作說明">×</button><h2>漫遊操作</h2><p>拖曳環視，點地板會沿可行走路線前往。用 WASD 或方向鍵移動，Q／E 轉向，Shift 加速，滾輪前後移動。</p><p>按 M 放大平面圖，點圖上地面或區域名稱前往。點「平面導覽」可收起地圖。按 Esc 可停止自動步行。</p><p>按「睇 Blender 原畫」可在影印機旁或向右半米兩個定點環視。按「自由行」可繼續步行。離開取景位後開啟原畫，返回自由行會回到剛才的位置。</p><button id="start" type="button">返回漫遊</button></dialog>
+<section class="review-tools"><button id="saveReview" hidden>儲存對照畫面</button><output id="captureStatus"></output></section>
+<details id="reviewNumbers" hidden><summary>測試數據</summary><output id="deviceReadout"></output><output id="motionReadout"></output></details><output id="diagnostics" hidden></output>
+<script type="module" src="./app.js?v=v6-panorama-1"></script></body></html>
