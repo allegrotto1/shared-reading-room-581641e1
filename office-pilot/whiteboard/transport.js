@@ -6,7 +6,7 @@ export async function enter(proof=false){
   if(!sealed)return true;
   const secret=sessionStorage.getItem('studio-session:'+base.pathname);
   if(!secret || !/^[\w-]{43}$/.test(secret)){
-    base.hash='view='+(proof?'office-board-proof':new URLSearchParams(location.search).has('device')?'office-board-device':'office-whiteboard');
+    base.hash='view='+(proof?'office-board-proof':location.pathname.endsWith('/archive-v11.html')?'office-archive-v11':new URLSearchParams(location.search).has('device')?'office-board-device':'office-whiteboard');
     location.replace(base.href);return false;
   }
   const bytes=Uint8Array.from(atob(secret.replace(/-/g,'+').replace(/_/g,'/')),c=>c.charCodeAt(0));

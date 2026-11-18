@@ -1,0 +1,9 @@
+<!doctype html>
+<html data-protected lang="zh-Hant"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><meta name="robots" content="noindex,nofollow"><meta name="referrer" content="no-referrer"><meta name="theme-color" content="#191c27"><link rel="icon" href="data:,"><link rel="stylesheet" href="./style.css"><title>青框白板 · POD 辦公室漫遊</title></head>
+<body><main id="viewer"><canvas id="scene" tabindex="0" aria-label="白板前自由行走及環視"></canvas>
+<section id="plan" class="glass"><button id="mapToggle" aria-expanded="false" aria-controls="floorMap">平面導覽 <span aria-hidden="true">⌄</span></button><canvas id="floorMap" width="340" height="230" aria-label="按地圖可步行位置移動" hidden></canvas></section>
+<div id="place" class="glass">連接通道</div>
+<div id="moves" class="glass" aria-label="行走"><button aria-label="向前行" data-key="w">↑</button><button aria-label="向左橫移" data-key="a">←</button><button aria-label="退後" data-key="s">↓</button><button aria-label="向右橫移" data-key="d">→</button></div>
+<div id="hint" class="glass">拖曳環視 · 點地面行走</div><a id="proof" class="glass" href="./review.html">實測對照 ↗</a>
+<div id="loading" role="status"><div class="load-panel"><span id="status">正在開啟白板前嘅原畫</span><progress aria-label="載入進度" max="100" value="4"></progress><button id="retry" hidden>重新載入</button></div></div></main>
+<script type="module" src="./app.js"></script></body></html>
