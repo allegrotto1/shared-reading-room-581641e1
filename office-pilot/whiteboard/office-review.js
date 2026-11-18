@@ -30,12 +30,13 @@ async function show(){
  add('ink','青框對位',b.corners+' 個可見角位，中位偏差 '+b.cornerMedian+' px，第 95 百分位 '+b.cornerP95+' px，最大 '+b.cornerMax+' px。');
  add('ink','離開原筆畫嘅墨跡','完整可見嘅 '+b.inkFrames+' 格，對正板面後，偏離原筆畫超過 1.5 px 嘅墨跡比例，中位 '+b.extraInkMedian+'%，第 95 百分位 '+b.extraInkP95+'%。');
  add('ink','移動時筆畫閃動',b.temporalPairs+' 對相鄰畫格，扣除透視同原畫亮度變化後，筆畫變化差平均 '+b.flicker+' / 255。');
+ if(r.exitSign)add('ink','出口牌橫移',r.exitSign.frames+' 個獨立機位橫移 '+r.exitSign.travelMetres+' 米，牌面連周邊嘅 RGB 平均絕對誤差 '+r.exitSign.cropRGBMean+' / 255，最高 '+r.exitSign.cropRGBWorst+' / 255。將牌面對正為 560 × 190 像素後，偏離原字超過 2.5 像素嘅筆畫比例，第 95 百分位 '+r.exitSign.extraStrokeP95+'%。');
  for(const [label,val] of Object.entries(r.devices))add('devices',label,val);
  $('stream').textContent='本機 RTX 4050 Laptop 6 GB 喺呢條路線以 960 × 640、40 次取樣重渲，連寫檔每格中位 '+a.renderMedian+' 秒，第 95 百分位 '+a.renderP95+' 秒。即時逐格串流需要常駐 GPU、硬件視像編碼及 WebRTC。以 30 fps 計，渲染、編碼同排程要配合每格 33.3 毫秒。假設網絡來回 20–60 毫秒、編解碼及顯示合計 15–35 毫秒，單格渲染 33 毫秒時，操作到畫面約 68–128 毫秒。以上延遲係規劃估算。';
  $('blend').onclick=source;$('cams').onclick=async()=>{try{save(new Blob([await readFile('cameras.json')],{type:'application/json'}),'POD-office-cameras-and-walk.json');}catch(e){$('download-status').textContent='下載中斷，可以再試一次。';}};
  $('status').textContent='';$('report').hidden=false;
  const mediaURL=async(id,type)=>URL.createObjectURL(new Blob([await readFile(id)],{type}));
- const crops=[['ink-100.png','青框白板 · 白板筆起收筆'],['desk-100.png','橫移半米 · 椅扶手及屏風'],['door-100.png','連接通道 · 玻璃門腳及地氈'],['plant-100.png','入口 · 黃金樹葉片及花盆'],['office-100.png','辦公區 · 影印機'],['window-100.png','會議室 · 窗外街景']];
+ const crops=[['ink-100.png','青框白板 · 白板筆起收筆'],['desk-100.png','橫移半米 · 椅扶手及屏風'],['door-100.png','連接通道 · 玻璃門腳及地氈'],['plant-100.png','入口 · 黃金樹葉片及花盆'],['office-100.png','辦公區 · 影印機'],['window-100.png','會議室 · 窗外街景'],['exit-sign-100.png','門口 · EXIT 出口牌']];
  await Promise.all([mediaURL('walk-comparison.mp4','video/mp4').then(v=>$('film').src=v),mediaURL('board-walk.mp4','video/mp4').then(v=>$('board').src=v),...crops.map(async([id,label])=>{
   const fig=document.createElement('figure'),link=document.createElement('a'),im=document.createElement('img'),caption=document.createElement('figcaption');
   link.target='_blank';link.rel='noopener';im.alt=label;link.append(im);caption.textContent=label;fig.append(link,caption);$('crops').append(fig);im.src=link.href=await mediaURL(id,'image/png');

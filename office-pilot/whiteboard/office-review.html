@@ -8,7 +8,7 @@
 <section><h2>五區行走驗收</h2><dl id="general"></dl><p id="limitations"></p></section>
 <section><h2>白板筆跡同遮擋</h2><figure><video id="board" playsinline controls preload="metadata" aria-label="白板橫移半米及倒行並排短片"></video><figcaption>正面行近、保持朝向橫移半米、斜望再倒行。兩邊各保留 960 × 640 原尺寸。</figcaption></figure><dl id="ink"></dl></section>
 <section><h2>原尺寸局部</h2><p>每張左邊係 Cycles，右邊係網頁。點圖可打開原尺寸。</p><div id="crops"></div></section>
-<section><h2>原畫同中途視角</h2><p>64 張 4096 × 2048 全景由 Blender 5.3 Cycles 按母檔燈光、材質及 AgX 色彩輸出。網頁用每個機位嘅位置同全尺寸深度，將附近原畫投影返場景幾何。轉頭、橫移同中途停步，都沿用同一個畫面。</p><p>白板筆跡取自板面專屬墨跡材質嘅 Cycles 正投影。地氈用四幅正投影還原近睇嘅纖維。辦公區兩道屏風透明帶同室內玻璃窗後面嘅枱櫃，按原有幾何逐條視線量度深度。會議室窗外沿用九張現場相片建立嘅街景、前景枝葉同窗內機位嘅反光。兩個拍攝機位之間嘅畫面都經過重建。</p></section>
+<section><h2>原畫同中途視角</h2><p>64 張 4096 × 2048 全景由 Blender 5.3 Cycles 按母檔燈光、材質及 AgX 色彩輸出，每張最多 64 次取樣。v13 參考影印機望向門口嘅畫面，將曝光由 +0.5 調至 −0.3 EV，並按參考圖修正「EXIT 出口」牌嘅比例、顏色同光面。</p><p>網頁用每個機位嘅位置同全尺寸深度，將附近原畫投影返場景幾何。轉頭、橫移同中途停步，都沿用同一個畫面。白板筆跡取自板面專屬墨跡材質嘅 Cycles 正投影。地氈用四幅正投影還原近睇嘅纖維。辦公區兩道屏風透明帶同室內玻璃窗後面嘅枱櫃，按原有幾何逐條視線量度深度。會議室窗外沿用九張現場相片建立嘅街景、前景枝葉同窗內機位嘅反光。兩個拍攝機位之間嘅畫面都經過重建。</p></section>
 <section><h2>裝置同畫格時間</h2><dl id="devices"></dl><p>用「量度呢部裝置」可以直接睇目前繪圖尺寸、畫格時間中位數同第 95 百分位。</p></section>
 <section><h2>逐格 Cycles 串流估算</h2><p id="stream"></p><p>試算一部 24 GB NVIDIA A10，按 US$1.29／GPU 小時，開機 100 小時係 US$129，另計稅項及其他服務。實際每格速度同香港連線延遲需要另行實測。 <a href="https://lambda.com/pricing" target="_blank" rel="noreferrer">Lambda 官方價格 ↗</a></p></section>
 <section><h2>編輯同覆核</h2><button id="blend">下載可編輯 Blender 檔</button><button id="cams">下載相機、驗收路線及逐格量度</button><p id="download-status" aria-live="polite"></p></section>
