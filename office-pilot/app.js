@@ -1,5 +1,5 @@
 import {Navigation} from './nav.js';
-import {readMedia,enterPilot} from './pilot/media.js?rev=garden10';
+import {readMedia,enterPilot} from './pilot/media.js?rev=garden10b';
 const $=s=>document.querySelector(s),canvas=$('#scene'),map=$('#map');
 let layout,nav,pos=[0,0],yaw=0,pitch=0,path=[],ready=false,engine,scene,camera,keys=new Set(),movingTouch='',loadedAt=0,frames=[],totalFrames=0,last=performance.now(),mapTime=0;
 const started=0,review=new URLSearchParams(location.search).has('review'),diagnostics=$('#diagnostics');
@@ -35,8 +35,8 @@ async function boot(){try{
   if(!await enterPilot())return;
   progress(2,'正在啟動 Babylon.js');
   await loadBabylon();
-  const runtime=await import('./pilot/babylon-room.js?rev=garden10');
-  const sphere=await import('./pilot/spherical-views.js?rev=garden10');aimCamera=runtime.aimCamera;
+  const runtime=await import('./pilot/babylon-room.js?rev=garden10b');
+  const sphere=await import('./pilot/spherical-views.js?rev=garden10b');aimCamera=runtime.aimCamera;
   engine=await runtime.createEngine(canvas);engine.setHardwareScalingLevel(1/walkDpr());
   const config=await Promise.all(['./assets/layout.json','./pilot/poses.json'].map(async url=>(await readMedia(url)).json()));
   [layout,pilot]=config;nav=new Navigation(layout);

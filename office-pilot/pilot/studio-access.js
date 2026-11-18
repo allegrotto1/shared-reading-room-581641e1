@@ -36,21 +36,72 @@ export async function read(path, onProgress) {
   const id=url.pathname.slice(root.pathname.length);
   const row=catalog[id];
   if(!row || !keyPromise)throw Error('Review asset unavailable');
-  const response=await fetch(row[3] || new URL('media/'+row[0]+'.bin',root),{referrerPolicy:'no-referrer'});
-  if(!response.ok) throw Error('Could not load review asset');
-  let packet;
-  if(onProgress && response.body) {
-    const reader=response.body.getReader(), parts=[];
-    let count=0;
-    for (;;) {
-      const {value,done}=await reader.read();
-      if(done)break;
-      parts.push(value);count+=value.byteLength;onProgress({loaded:count,total:row[2]+28});
-    }
-    packet=new Uint8Array(await new Blob(parts).arrayBuffer());
-  } else packet=new Uint8Array(await response.arrayBuffer());
-  if(packet.length!==row[2]+28)throw Error('Incomplete review asset');
+  const packet=await readPacket(row[3] || new URL('media/'+row[0]+'.bin',root),row[2]+28,onProgress);
   const plain=await crypto.subtle.decrypt({name:'AES-GCM',iv:packet.subarray(0,12),
     additionalData:encoder.encode('office-pilot/'+id)},await keyPromise,packet.subarray(12));
   return new Response(plain,{headers:{'Content-Type':row[1],'Content-Length':String(row[2])}});
+}
+
+// Limit simultaneous full asset transfers. The panorama and the office may both be loading.
+const maximumTransfers = 5;
+const waitingTransfers = [];
+let activeTransfers = 0;
+
+async function getTransferSlot() {
+  if (activeTransfers < maximumTransfers) {
+    activeTransfers++;
+    return;
+  }
+  await new Promise(resolve => waitingTransfers.push(resolve));
+}
+
+function releaseTransferSlot() {
+  const next = waitingTransfers.shift();
+  if (next) next();
+  else activeTransfers--;
+}
+
+async function downloadPacket(url, expectedBytes, onProgress, attempt) {
+  const resource = new URL(url);
+  if (attempt) resource.searchParams.set('attempt', String(attempt));
+  const response = await fetch(resource, { referrerPolicy: 'no-referrer' });
+  if (!response.ok) {
+    const error = new Error('Could not load review asset (' + response.status + ')');
+    error.status = response.status;
+    throw error;
+  }
+  let packet;
+  if (onProgress && response.body) {
+    const reader = response.body.getReader();
+    const parts = [];
+    let loaded = 0;
+    for (;;) {
+      const part = await reader.read();
+      if (part.done) break;
+      parts.push(part.value);
+      loaded += part.value.byteLength;
+      onProgress({ loaded, total: expectedBytes });
+    }
+    packet = new Uint8Array(await new Blob(parts).arrayBuffer());
+  } else {
+    packet = new Uint8Array(await response.arrayBuffer());
+  }
+  if (packet.byteLength !== expectedBytes) throw new Error('Incomplete review asset');
+  return packet;
+}
+
+async function readPacket(url, expectedBytes, onProgress) {
+  const waits = [0, 450, 1250, 2600];
+  for (let attempt = 0; attempt < waits.length; attempt++) {
+    if (attempt) await new Promise(resolve => setTimeout(resolve, waits[attempt]));
+    await getTransferSlot();
+    try {
+      return await downloadPacket(url, expectedBytes, onProgress, attempt);
+    } catch (error) {
+      const permanent = error.status >= 400 && error.status < 500 && ![408, 425, 429].includes(error.status);
+      if (permanent || attempt === waits.length - 1) throw error;
+    } finally {
+      releaseTransferSlot();
+    }
+  }
 }

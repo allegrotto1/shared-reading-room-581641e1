@@ -1,4 +1,4 @@
-import {mediaLocation} from './media.js?rev=garden10';
+import {mediaLocation} from './media.js?rev=garden10b';
 const B=globalThis.BABYLON, cols=8,rows=4,tile=1024,pad=4;
 function makePatch(scene,heading,col,row,whole=false){
   const name=whole?'Preview':'Tile '+row+'/'+col, mesh=new B.Mesh(name,scene), geom=new B.VertexData();
