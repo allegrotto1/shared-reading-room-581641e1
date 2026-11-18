@@ -1,4 +1,4 @@
-import {readMedia} from './media.js?rev=babylon9a';
+import {readMedia} from './media.js?rev=garden10';
 const B=globalThis.BABYLON;
 
 export async function createEngine(canvas) {
@@ -32,7 +32,7 @@ export async function loadOffice(engine, progress) {
     while(cursor<list.length){
       const name=list[cursor++],res=await readMedia('./'+name);
       if(!res.ok)throw Error('Surface not available');
-      textures.set(name,URL.createObjectURL(new Blob([await res.arrayBuffer()],{type:name.endsWith('.webp')?'image/webp':'image/png'})));
+      textures.set(name,URL.createObjectURL(new Blob([await res.arrayBuffer()],{type:name.endsWith('.webp')?'image/webp':name.endsWith('.jpg')?'image/jpeg':'image/png'})));
       progress(24+62*++done/list.length,'正在載入地氈、枱凳同櫃面');
     }
   }));
@@ -40,6 +40,19 @@ export async function loadOffice(engine, progress) {
     if(textures.has(v?.name)){v.name=textures.get(v.name);v.url=v.name;}
   }
   await B.SceneLoader.AppendAsync('', 'data:'+JSON.stringify(data), scene,undefined,'.babylon');
+  const importedMeshes=new Map(scene.meshes.map(mesh=>[mesh.id,mesh]));
+  for(const definition of data.cameras||[]){
+    if(!scene.getCameraById(definition.id))B.Camera.Parse(definition,scene);
+  }
+  if((data.cameras||[]).some(definition=>!scene.getCameraById(definition.id)))throw Error('Office cameras missing');
+  const materialNames=new Map([...data.materials,...(data.multiMaterials||[])].map(material=>[material.id,material.name]));
+  const materialById=new Map([...scene.materials,...scene.multiMaterials].map(material=>[material.id,material]));
+  for(const source of data.meshes){
+    const mesh=importedMeshes.get(source.id);
+    const surface=materialById.get(source.materialId)||scene.getMaterialByName(materialNames.get(source.materialId));
+    if(!mesh||!surface)throw Error('Missing office surface '+source.name);
+    mesh.material=surface;
+  }
   // These imported, measured fixtures belong to the Blender file. Indirect illumination is baked.
   const nativeCounts={lights:scene.lights.length,rectangularLights:scene.lights.filter(light=>light instanceof B.RectAreaLight).length,cameras:scene.cameras.length,meshes:scene.meshes.length,source:data.producer.exporter_version};
   let maxPositionError=0,maxAimError=0;
@@ -79,10 +92,22 @@ export async function loadOffice(engine, progress) {
     if(m.unlit){m.environmentIntensity=0;}
     for(const tex of m.getActiveTextures())tex.anisotropicFilteringLevel=Math.min(engine.getCaps().maxAnisotropy||1,8);
   }
+  let thinLeaves=0;
+  for(const m of scene.materials){
+    if(m.metadata?.v10!=='leaf'&&!m.name.startsWith('V10 ZZ leaflet'))continue;
+    m.subSurface.isTranslucencyEnabled=true;
+    m.subSurface.translucencyIntensity=.22;
+    m.subSurface.translucencyColor=new B.Color3(.32,.51,.135);
+    m.subSurface.minimumThickness=.015;m.subSurface.maximumThickness=.20;
+    m.twoSidedLighting=true;m.backFaceCulling=false;m.directIntensity=.22;
+    thinLeaves++;
+  }
+  nativeCounts.leafMaterials=thinLeaves;nativeCounts.streetSurfaces=scene.meshes.filter(m=>m.material?.name.startsWith('V10 Street')).length;
+  if(thinLeaves!==3 || nativeCounts.streetSurfaces<7)throw Error('Incomplete entrance or street model '+thinLeaves+'/'+nativeCounts.streetSurfaces+' '+scene.meshes.filter(m=>m.name.startsWith('V10 Web')).slice(-13).map(m=>[m.name,m.material?.name]).join(' '));
   const camera=new B.FreeCamera('Visitor',new B.Vector3(0,1.62,0),scene);
-  camera.minZ=.035;camera.maxZ=100;scene.activeCamera=camera;camera.inputs.clear();
+  camera.minZ=.035;camera.maxZ=400;scene.activeCamera=camera;camera.inputs.clear();
   scene.onDisposeObservable.addOnce(()=>{for(const url of textures.values())URL.revokeObjectURL(url);});
-  for(const mesh of scene.meshes){mesh.isPickable=true;mesh.freezeWorldMatrix();}
+  for(const mesh of scene.meshes){mesh.isPickable=!mesh.material?.name.startsWith('V10 Street');mesh.freezeWorldMatrix();}
   await scene.whenReadyAsync();
   return {scene,camera,nativeCounts};
 }

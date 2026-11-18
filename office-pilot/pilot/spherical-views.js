@@ -1,4 +1,4 @@
-import {mediaLocation} from './media.js?rev=babylon9a';
+import {mediaLocation} from './media.js?rev=garden10';
 const B=globalThis.BABYLON, cols=8,rows=4,tile=1024,pad=4;
 function makePatch(scene,heading,col,row,whole=false){
   const name=whole?'Preview':'Tile '+row+'/'+col, mesh=new B.Mesh(name,scene), geom=new B.VertexData();
@@ -20,7 +20,7 @@ export class SphericalViews{
     this.camera=new B.FreeCamera('Blender originals',B.Vector3.Zero(),this.scene);this.camera.minZ=.01;this.camera.maxZ=2;
     this.camera.inputs.clear();this.scene.activeCamera=this.camera;this.redraw=redraw;this.report=report;
     this.base=makePatch(this.scene,heading,0,0,true);this.patches=Array.from({length:32},(_,i)=>makePatch(this.scene,heading,i%8,Math.floor(i/8)));
-    this.stations=new Map(['origin','side','meeting'].map(id=>[id,{preview:null,tiles:this.patches.map((_,i)=>({i,key:'r'+Math.floor(i/8)+'-c'+i%8+'.png',use:0}))}]));
+    this.stations=new Map(['origin','side','meeting','plant'].map(id=>[id,{preview:null,tiles:this.patches.map((_,i)=>({i,key:'r'+Math.floor(i/8)+'-c'+i%8+'.png',use:0}))}]));
     this.active=null;this.inFlight=0;this.visibleCount=0;this.loadedCount=0;
   }
   async texture(name,file){

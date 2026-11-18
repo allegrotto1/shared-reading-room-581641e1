@@ -1,5 +1,5 @@
 import {Navigation} from './nav.js';
-import {readMedia,enterPilot} from './pilot/media.js?rev=babylon9a';
+import {readMedia,enterPilot} from './pilot/media.js?rev=garden10';
 const $=s=>document.querySelector(s),canvas=$('#scene'),map=$('#map');
 let layout,nav,pos=[0,0],yaw=0,pitch=0,path=[],ready=false,engine,scene,camera,keys=new Set(),movingTouch='',loadedAt=0,frames=[],totalFrames=0,last=performance.now(),mapTime=0;
 const started=0,review=new URLSearchParams(location.search).has('review'),diagnostics=$('#diagnostics');
@@ -12,20 +12,37 @@ function progress(p,msg){$('#loadBar').style.width=p+'%';$('#loadPercent').textC
 function fatal(e){console.error(e);$('#loading').classList.remove('done');$('#loadMessage').textContent='場景暫時未能載入，請重試。';$('#retry').hidden=false;$('#loadPercent').textContent='請檢查網絡連線';}
 $('#retry').onclick=()=>location.reload();
 const roomStart=new URLSearchParams(location.search).get('room')==='meeting';
-const nearestStation=()=>['origin','side','meeting'].reduce((a,b)=>stationDistance(a)<=stationDistance(b)?a:b);
+const detailViews={
+  plant:{position:[-.19,-2.99],target:[-1.43644,-2.68,.78],fov:76},
+  window:{position:[1.25,6.02],target:[2.32,12.1,1.67],fov:67}
+};
+function detailView(which) {
+  const view=detailViews[which];if(!view)return;
+  if(!nav.safe(view.position))throw Error('Invalid review position');
+  const [x,y]=view.position,[tx,ty,tz]=view.target;
+  pos=[x,y];yaw=Math.atan2(x-tx,ty-y);pitch=Math.atan2(tz-layout.eyeHeight,Math.hypot(x-tx,ty-y));viewFov=view.fov;
+}
+function switchDetail(which) {
+  if(!ready)return;
+  leaveOriginal();stopWalking();detailView(which);syncCamera();updateMap();canvas.focus({preventScroll:true});
+}
+$('#treeView').onclick=()=>switchDetail('plant');
+$('#windowView').onclick=()=>switchDetail('window');
+const nearestStation=()=>['origin','side','meeting','plant'].reduce((a,b)=>stationDistance(a)<=stationDistance(b)?a:b);
 const walkDpr=()=>Math.min(devicePixelRatio,matchMedia('(pointer:coarse)').matches?1.3:1.6);
 function syncCamera(){aimCamera(camera,pos[0],pos[1],layout.eyeHeight,yaw,pitch,viewFov);}
 async function boot(){try{
   if(!await enterPilot())return;
   progress(2,'正在啟動 Babylon.js');
   await loadBabylon();
-  const runtime=await import('./pilot/babylon-room.js?rev=babylon9a');
-  const sphere=await import('./pilot/spherical-views.js?rev=babylon9a');aimCamera=runtime.aimCamera;
+  const runtime=await import('./pilot/babylon-room.js?rev=garden10');
+  const sphere=await import('./pilot/spherical-views.js?rev=garden10');aimCamera=runtime.aimCamera;
   engine=await runtime.createEngine(canvas);engine.setHardwareScalingLevel(1/walkDpr());
   const config=await Promise.all(['./assets/layout.json','./pilot/poses.json'].map(async url=>(await readMedia(url)).json()));
   [layout,pilot]=config;nav=new Navigation(layout);
   if(!nav.clear(pilot.origin,pilot.side))throw Error('Comparison path obstructed');
   pos=[...(roomStart?pilot.meeting:pilot.origin)];yaw=roomStart?pilot.meetingYaw:entranceHeading();pitch=roomStart?pilot.meetingPitch:pilot.pitch;viewFov=pilot.fov;
+  detailView(new URLSearchParams(location.search).get('room'));
   progress(15,'正在讀取 Blender 匯出嘅辦公室');
   ({scene,camera,nativeCounts}=await runtime.loadOffice(engine,progress));syncCamera();
   screenshotStats=new BABYLON.SceneInstrumentation(scene);
@@ -220,7 +237,10 @@ async function openOriginal(name) {
     if(request!==lastRequest) return;
     pendingStation=null;
     const wasMeeting=panorama.active==='meeting'||(!panorama.active&&nav.zone(pos).id===nav.zone(pilot.meeting).id);
-    if((name==='meeting')!==wasMeeting) {
+    if(name==='plant' && (panorama.active || stationDistance('plant')>.05)){
+      const look=detailViews.plant;const [x,y]=pilot.plant,[tx,ty,tz]=look.target;
+      yaw=Math.atan2(x-tx,ty-y);pitch=Math.atan2(tz-layout.eyeHeight,Math.hypot(x-tx,ty-y));viewFov=look.fov;syncCamera();
+    }else if(name!=='plant'&&(name==='meeting')!==wasMeeting) {
       yaw=name==='meeting'?pilot.meetingYaw:entranceHeading();pitch=name==='meeting'?pilot.meetingPitch:pilot.pitch;
       syncCamera();
     }
@@ -354,7 +374,7 @@ function animate(now) {
   if(now-previousDiagnostic>500) {
     previousDiagnostic=now;
     const fps=frames.length/frames.reduce((a,b)=>a+b,0);
-    const perf={version:'pod-v9-babylon',engine:'Babylon.js '+BABYLON.Engine.Version,graphics:engine.name,native:nativeCounts,mode:panorama.active?'original':'walk',station:panorama.active,
+    const perf={version:'pod-v10-babylon',engine:'Babylon.js '+BABYLON.Engine.Version,graphics:engine.name,native:nativeCounts,mode:panorama.active?'original':'walk',station:panorama.active,
       visibleTiles:panorama.visibleCount,readyTiles:panorama.loadedCount,fov:viewFov,ready:true,
       visible:document.visibilityState,focused:document.hasFocus(),position:pos.map(x=>+x.toFixed(3)),
       yaw:+yaw.toFixed(3),pitch:+pitch.toFixed(3),area:nav.zone(pos).label,walking:path.length>0||!!slide,
