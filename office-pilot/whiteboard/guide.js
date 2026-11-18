@@ -3,6 +3,20 @@ export const destinations=[
  ['office','辦公座位',[-2.50,-.64,1.05]],['copier','影印機',[-.23,.29,.95]],['pantry','茶水位',[3.99,-1.12,1.20]],
  ['meeting','會議室',[1.83,5.02,.99]],['window','會議室窗邊',[2.10,9.50,1.89]]
 ];
+// Locate future points along the same route used for walking, including its corners.
+export function previewPath(start,waypoints,distances){
+ const result=[];let from=start,travelled=0,i=0;
+ for(const to of waypoints){
+   const dx=to[0]-from[0],dy=to[1]-from[1],length=Math.hypot(dx,dy);
+   while(i<distances.length&&length>0&&distances[i]<=travelled+length){
+     const fraction=(distances[i++]-travelled)/length;
+     result.push([from[0]+fraction*dx,from[1]+fraction*dy]);
+   }
+   travelled+=length;from=to;if(i===distances.length)break;
+ }
+ if(waypoints.length&&i===0)result.push(waypoints[waypoints.length-1]);
+ return result;
+}
 export function lookAt(eye,height,point){
   const dx=point[0]-eye[0],dy=point[1]-eye[1];return [Math.atan2(dx,dy),Math.atan2(point[2]-height,Math.hypot(dx,dy))];
 }

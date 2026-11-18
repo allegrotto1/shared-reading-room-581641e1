@@ -1,7 +1,7 @@
 import {enter,readFile} from './storage12.js';
 import {Navigation} from './nav-floor.js';
 import {CaptureField} from './field.js';
-import {lookAt,stepManual,stepGuide,destinations} from './guide.js';
+import {lookAt,stepManual,stepGuide,destinations,previewPath} from './guide.js';
 import {SourceTextures} from './textures12.js';
 import {projectionMaterial} from './projection12.js';
 const $=sel=>document.querySelector(sel),canvas=$('#scene'),qs=new URLSearchParams(location.search),keys=new Set();
@@ -55,6 +55,13 @@ function step(dt){
       const mag=Math.hypot(dx,dy);dx/=mag;dy/=mag;
       const ahead=[view.xy[0]+.85*dx,view.xy[1]+.85*dy];
       sources.predict(nav.safe(ahead)?ahead:view.xy);
+      const now=performance.now();
+      if(now-sources.lastPreview>250){
+        sources.lastPreview=now;
+        const path=route.points.length?route.points:[[view.xy[0]+4.6*dx,view.xy[1]+4.6*dy]];
+        const upcoming=previewPath(view.xy,path,[.30,.80,1.45,2.15,3.05,4.35]);
+        sources.preview(upcoming.filter(p=>nav.safe(p)&&field.reachable(p)));
+      }
       const test=[view.xy[0]+dt*1.5*dx,view.xy[1]+dt*1.5*dy];
       if(nav.safe(test)&&sources.coverage(test)<.52){
         if(!waitStart){waitStart=performance.now();waitEvents++;}

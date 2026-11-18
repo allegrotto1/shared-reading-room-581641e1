@@ -13,6 +13,7 @@ export class SourceTextures{
   constructor(B,scene,material,field,mobile,redraw){
     this.B=B;this.scene=scene;this.mat=material;this.field=field;this.limit=mobile?5:6;this.redraw=redraw;
     this.decoder=new PixelDecoder();this.cache=new Map();this.pending=new Map();this.retry=new Map();this.active=[];this.request=[];this.tiles=new Map();this.tilePending=new Map();
+    this.warm=new Map();this.inFlight=new Set();this.maxWarm=mobile?9:12;this.lastPreview=-1000;
     this.blank=this.raw(new Uint8Array([128]),1,1,false,false);
     this.mat.setTexture('leafPhoto',this.blank);this.mat.setTexture('streetPhoto',this.blank);this.mat.setFloat('streetReady',0);
     for(const [i,r] of carpetRects.entries()){material.setVector4('rect'+i,new B.Vector4(r[0],r[1],r[2]-r[0],r[3]-r[1]));material.setTexture('carpet'+i,this.blank);}
@@ -24,12 +25,12 @@ export class SourceTextures{
     t.wrapU=depth?b.Texture.WRAP_ADDRESSMODE:b.Texture.CLAMP_ADDRESSMODE;t.wrapV=b.Texture.CLAMP_ADDRESSMODE;t.gammaSpace=false;t.anisotropicFilteringLevel=depth?1:4;
     return t;
   }
-  async rawFile(id){
-    const q=await this.decoder.read(await readFile(id));
+  async rawFile(id,bytes){
+    const q=await this.decoder.read(await (bytes||readFile(id)));
     return this.raw(q.two?new Uint16Array(q.buffer):new Uint8Array(q.buffer),q.width,q.height,q.two,!q.two);
   }
-  async colour(id){
-    const bytes=await readFile(id),b=this.B;
+  async colour(id,preloaded){
+    const bytes=await (preloaded||readFile(id)),b=this.B;
     const url=URL.createObjectURL(new Blob([bytes],{type:id.endsWith('.png')?'image/png':'image/webp'}));
     try{return await new Promise((resolve,reject)=>{
       const t=new b.Texture(url,this.scene,false,false,b.Texture.TRILINEAR_SAMPLINGMODE,()=>{
@@ -41,7 +42,8 @@ export class SourceTextures{
     if(this.cache.has(id))return Promise.resolve(this.cache.get(id));
     if(this.pending.has(id))return this.pending.get(id);
     const root='view-'+String(id).padStart(2,'0');
-    const task=Promise.allSettled([this.colour(root+'.webp'),this.rawFile(root+'-depth.bin.gz')]).then(result=>{
+    const bytes=this.warm.get(id);this.warm.delete(id);
+    const task=Promise.allSettled([this.colour(root+'.webp',bytes?.[0]),this.rawFile(root+'-depth.bin.gz',bytes?.[1])]).then(result=>{
       if(result.some(x=>x.status==='rejected')){
         for(const value of result)if(value.status==='fulfilled')value.value.dispose();
         this.retry.set(id,performance.now()+2500);throw result.find(x=>x.status==='rejected').reason;
@@ -79,6 +81,28 @@ export class SourceTextures{
     if(xy[1]>.65)await this.exterior();
   }
   predict(point){this.ahead=point;}
+  preview(points){
+    const ids=new Set();
+    for(const point of points)for(const [id,weight] of this.field.weights(point).weights)if(weight>.035)ids.add(id);
+    // Only compressed source files are read ahead. GPU residency stays bounded.
+    for(const id of ids){
+      if(this.inFlight.size>=3)break;
+      if(this.cache.has(id)||this.pending.has(id)||this.warm.has(id)||(this.retry.get(id)||0)>performance.now())continue;
+      while(this.warm.size>=this.maxWarm){
+        const victim=[...this.warm.keys()].find(key=>!this.inFlight.has(key)&&!ids.has(key));
+        if(victim===undefined)break;
+        this.warm.delete(victim);
+      }
+      if(this.warm.size>=this.maxWarm)break;
+      const root='view-'+String(id).padStart(2,'0');
+      const pair=[readFile(root+'.webp'),readFile(root+'-depth.bin.gz')];
+      this.warm.set(id,pair);this.inFlight.add(id);
+      Promise.allSettled(pair).then(result=>{
+        this.inFlight.delete(id);
+        if(result.some(v=>v.status==='rejected')&&this.warm.get(id)===pair)this.warm.delete(id);
+      });
+    }
+  }
   coverage(xy){
     const items=this.field.weights(xy).weights;
     let total=0;for(const [id,w] of items)if(this.cache.has(id))total+=w;
