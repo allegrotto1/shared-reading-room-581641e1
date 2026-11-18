@@ -1,6 +1,6 @@
 // The Studio edition decrypts each requested asset in this tab. The local pilot uses ordinary files.
 const inStudio = document.documentElement.hasAttribute('data-research-studio');
-const transport = inStudio ? import('./studio-access.js?rev=lighting7b') : null;
+const transport = inStudio ? import('./studio-access.js?rev=babylon9a') : null;
 
 export async function enterPilot() {
   return transport ? (await transport).enter() : true;
