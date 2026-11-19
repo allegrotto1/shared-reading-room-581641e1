@@ -1,0 +1,155 @@
+{
+  "protocol": "Desktop Chromium with touch emulation. 390 x 844 CSS, DPR 2. New browser context and disabled cache for each run. Local HTTP, throttled 20 Mbit/s and 50 ms network latency. Browser navigation start to the first walkable frame. Guided walk from reception to the white table via the public floor plan. Frame interval P95 and max include motion only. One small transfer for the comparison page is outside the walk.",
+  "physicalPhone": null,
+  "runs": [
+    {
+      "readyMs": 4297,
+      "initialBytes": 6912020,
+      "additionalBytes": 0,
+      "backend": "WebGPU",
+      "canvas": [
+        780,
+        1688
+      ],
+      "stats": "780 × 1688 · P95 7.2 ms · Max 26 ms (1165 frames)",
+      "p95": 7.2,
+      "max": 26,
+      "finalZone": "meeting",
+      "complete": true,
+      "errors": [],
+      "failed": [],
+      "browser": "157.0.8103.79"
+    },
+    {
+      "readyMs": 4270,
+      "initialBytes": 6912020,
+      "additionalBytes": 0,
+      "backend": "WebGPU",
+      "canvas": [
+        780,
+        1688
+      ],
+      "stats": "780 × 1688 · P95 7.2 ms · Max 26 ms (1165 frames)",
+      "p95": 7.2,
+      "max": 26,
+      "finalZone": "meeting",
+      "complete": true,
+      "errors": [],
+      "failed": [],
+      "browser": "157.0.8103.79"
+    },
+    {
+      "readyMs": 4350,
+      "initialBytes": 6912020,
+      "additionalBytes": 0,
+      "backend": "WebGPU",
+      "canvas": [
+        780,
+        1688
+      ],
+      "stats": "780 × 1688 · P95 7.2 ms · Max 26 ms (1164 frames)",
+      "p95": 7.2,
+      "max": 26,
+      "finalZone": "meeting",
+      "complete": true,
+      "errors": [],
+      "failed": [],
+      "browser": "157.0.8103.79"
+    }
+  ],
+  "navigation": {
+    "signs": [
+      {
+        "brand": "aster",
+        "signs": [
+          {
+            "name": "Reception sign",
+            "enabled": true,
+            "texture": "aster.webp"
+          },
+          {
+            "name": "Meeting room sign",
+            "enabled": true,
+            "texture": "aster.webp"
+          },
+          {
+            "name": "Entrance glass sign",
+            "enabled": true,
+            "texture": "aster.webp"
+          }
+        ]
+      },
+      {
+        "brand": "tern",
+        "signs": [
+          {
+            "name": "Reception sign",
+            "enabled": true,
+            "texture": "tern.webp"
+          },
+          {
+            "name": "Meeting room sign",
+            "enabled": true,
+            "texture": "tern.webp"
+          },
+          {
+            "name": "Entrance glass sign",
+            "enabled": true,
+            "texture": "tern.webp"
+          }
+        ]
+      }
+    ],
+    "informationStops": [
+      "Example practice · Waste\nWater refills\n\nGuests can refill a reusable bottle at a drinking water station instead of taking a new disposable bottle.\n\nBack to the office",
+      "Example practice · Waste\nDigital receipts\n\nAt checkout, guests can choose to receive a receipt by email. Printed copies are available on request.\n\nBack to the office",
+      "Example practice · Energy\nDaylight controls\n\nWhen there is enough daylight, sensors dim the lights near the window. Guests can still adjust the room lighting.\n\nBack to the office"
+    ],
+    "touchSideStepMetres": 0.49999999999999994,
+    "releasedDriftMetres": 0,
+    "headingChangeRadians": 0,
+    "simulatedWaterBump": {
+      "event": "walk into the dispenser counter and release",
+      "peakTransformedHeightMetres": 0.0072154998779296875,
+      "settledMaxMetres": 0
+    }
+  },
+  "streamFailure": {
+    "test": "WebGL2, forced 503 for room geometry, then successful retry, mobile emulation",
+    "automaticStopY": 1.154532432496596,
+    "manualStopY": 1.16,
+    "arrivedAt": [
+      0.65,
+      4.2,
+      1.62
+    ],
+    "requests": 2,
+    "sameDocument": true
+  },
+  "geometry": [
+    {
+      "part": "office",
+      "triangles": 360810,
+      "compressedBytes": 1108280,
+      "allTriangleCornersExact": true
+    },
+    {
+      "part": "threshold",
+      "triangles": 42452,
+      "compressedBytes": 201205,
+      "allTriangleCornersExact": true
+    },
+    {
+      "part": "meeting",
+      "triangles": 256912,
+      "compressedBytes": 802712,
+      "allTriangleCornersExact": true
+    },
+    {
+      "part": "street",
+      "triangles": 34238,
+      "compressedBytes": 246942,
+      "allTriangleCornersExact": true
+    }
+  ]
+}

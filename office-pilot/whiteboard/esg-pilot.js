@@ -1,6 +1,6 @@
 import {meetingSignView} from './guide.js?v=hotel-15c';
 
-const stations = [
+export const stations = [
   { id: 'copier', place: 'Copier', title: 'Digital receipts', category: 'Waste', at: [-.45, .42, 1.43], range: 2.05,
     copy: 'At checkout, guests can choose to receive a receipt by email. Printed copies are available on request.' },
   { id: 'pantry', place: 'Water dispenser', title: 'Water refills', category: 'Waste', at: [3.93, -.98, 1.29], range: 1.45,

@@ -1,72 +1,9 @@
 <!doctype html>
-<html data-public-hotel data-esg-pilot lang="en">
-<head>
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<meta name="robots" content="noindex,nofollow">
-<meta name="referrer" content="no-referrer">
-<meta name="theme-color" content="#191c27">
-<meta name="description" content="Try scene based ESG information and a hotel sign that changes with your answer in an interactive walkthrough.">
-<link rel="icon" href="data:,">
-<link rel="stylesheet" href="./full.css">
-<link rel="stylesheet" href="./esg-pilot.css">
-<meta property="og:type" content="website">
-<meta property="og:title" content="Hotel ESG interaction demo">
-<meta property="og:description" content="Try the changing hotel sign and three ESG information pop-ups.">
-<title>Hotel ESG interaction demo</title>
-</head>
-<body>
-<main id="viewer">
-  <canvas id="scene" tabindex="0" aria-label="Walkthrough. Use the arrow keys or WASD to move. Drag to look around."></canvas>
-  <section id="plan" class="glass"><button id="mapToggle" aria-expanded="false" aria-controls="planBody">Floor plan <span aria-hidden="true">⌄</span></button><div id="planBody" hidden><canvas id="floorMap" width="326" height="348" aria-label="Office floor plan. Select a point to walk there."></canvas><div id="places" aria-label="Choose a destination"></div><button id="stop" hidden>Stop walking</button></div></section>
-  <div id="place" class="glass">Connecting corridor</div>
-  <div id="moves" class="glass" aria-label="Movement controls"><button aria-label="Move forward" data-key="w">↑</button><button aria-label="Step left" data-key="a">←</button><button aria-label="Step back" data-key="s">↓</button><button aria-label="Step right" data-key="d">→</button></div>
-  <div id="hint" class="glass">Drag to look · Tap to walk</div>
-
-  <div id="esg-controls">
-    <div id="esg-hotel-switch" class="glass" role="group" aria-label="Switch hotel signs" hidden>
-      <span>Hotel signs</span>
-      <button type="button" data-brand-switch="aster" aria-pressed="false">Aster Quay</button>
-      <button type="button" data-brand-switch="tern" aria-pressed="false">Tern Court</button>
-    </div>
-    <button id="esg-marker" type="button" hidden aria-haspopup="dialog" aria-controls="esg-card"><span aria-hidden="true">i</span><strong></strong></button>
-    <button id="esg-guide-button" class="glass" type="button" hidden aria-haspopup="dialog" aria-controls="esg-guide">
-      <span>Demo guide</span><span id="esg-count">0 / 3</span>
-    </button>
-  </div>
-
-  <div id="loading" role="status"><div class="load-panel"><span id="status">Opening the walkthrough…</span><progress aria-label="Loading progress" max="100" value="4"></progress><button id="retry" hidden>Try again</button></div></div>
-
-  <dialog id="esg-welcome" class="esg-panel" aria-labelledby="esg-title">
-    <p class="esg-kicker">Interaction preview</p>
-    <h1 id="esg-title">Hotel study preview</h1>
-    <p>Choose a hotel to change the signs at reception, on the entrance glass and in the meeting room. Use <strong>Demo guide</strong> to try the three ESG pop-ups in this office walkthrough.</p>
-    <div id="esg-start-options" role="group" aria-labelledby="esg-brand-question">
-      <p id="esg-brand-question">Which hotel would you choose?</p>
-      <button type="button" data-brand-enter="aster" class="esg-primary">Aster Quay Hotel</button>
-      <button type="button" data-brand-enter="tern" class="esg-primary">Tern Court Hotel</button>
-    </div>
-    <p class="esg-note" id="esg-start-note" aria-live="polite">Loading the office scene…</p>
-  </dialog>
-
-  <dialog id="esg-card" class="esg-panel esg-sheet" aria-labelledby="esg-card-title">
-    <p id="esg-card-category" class="esg-kicker">Example hotel practice</p>
-    <h2 id="esg-card-title"></h2>
-    <p id="esg-card-copy"></p>
-    <form method="dialog"><button class="esg-primary" autofocus>Back to walkthrough</button></form>
-  </dialog>
-
-  <dialog id="esg-guide" class="esg-panel esg-sheet" aria-labelledby="esg-guide-title">
-    <p class="esg-kicker">Explore the demo</p>
-    <h2 id="esg-guide-title">Three ESG stops</h2>
-    <p>Walk close to an object and look towards it, or pick a stop here.</p>
-    <div id="esg-stops"></div>
-    <label class="esg-mode"><input type="checkbox" id="esg-auto"><span><strong>Open cards automatically</strong><small>Show each unread card once as you approach and look at its object.</small></span></label>
-    <div class="esg-actions">
-      <form method="dialog"><button class="esg-primary" autofocus>Back to walkthrough</button></form>
-    </div>
-  </dialog>
-</main>
-<script type="module" src="./office.js?v=hotel-15c"></script>
-</body>
-</html>
+<html lang="en"><head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="robots" content="noindex,nofollow"><meta name="referrer" content="no-referrer">
+<meta property="og:title" content="Office walkthrough"><meta name="description" content="Walk from reception to the meeting room.">
+<title>Office walkthrough</title>
+<script>const entry=new URL('../office-native/',location.href);entry.search=location.search;entry.hash=location.hash;location.replace(entry.href);</script>
+<noscript><meta http-equiv="refresh" content="0; url=../office-native/"></noscript>
+</head><body><a href="../office-native/">Open the office walkthrough</a></body></html>

@@ -1,0 +1,15 @@
+<!doctype html>
+<html lang="en" data-walk="office">
+<head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><meta name="theme-color" content="#221e28"><meta name="robots" content="noindex,nofollow"><meta property="og:title" content="Office walkthrough"><meta name="description" content="Explore the office, from reception to the meeting room."><link rel="icon" href="data:,"><link rel="stylesheet" href="../meeting-native/style.css"><link rel="stylesheet" href="office.css"><title>Office walkthrough</title></head>
+<body><main><canvas id="scene" tabindex="0" aria-label="Office walkthrough. Drag to look, tap the floor or use the arrow buttons to move."></canvas>
+<header class="hud"><button class="place" id="plan-toggle" aria-expanded="false" aria-controls="office-plan">Floor plan <span aria-hidden="true">⌄</span></button><div class="place"><i class="dot"></i><span id="current-place">Reception</span></div></header>
+<nav id="office-plan" class="sheet" aria-label="Floor plan" hidden><canvas id="map" width="240" height="238" aria-label="Tap a point to walk there."></canvas><div id="destinations"></div><button id="sign-options">Change signs</button><button id="info-options">Information stops</button><a href="../meeting-native/review.html">Compare meeting room views ↗</a></nav>
+<div class="pad" aria-label="Walking controls"><button data-key="w" aria-label="Walk forward">↑</button><button data-key="a" aria-label="Step left">←</button><button data-key="s" aria-label="Walk backwards">↓</button><button data-key="d" aria-label="Step right">→</button></div>
+<button id="object-info" hidden aria-haspopup="dialog"></button>
+<div class="toolbar"><button id="measure" aria-pressed="false">Measure walk</button><button id="half-step" hidden>Step right 0.50 m</button><output id="result" aria-live="polite" hidden></output></div>
+<p class="hints" id="hint">Drag to look · Tap the floor to walk</p>
+<div class="loading" role="status"><div><h1>Office walkthrough</h1><p id="status">Opening reception…</p><div class="bar"><i></i></div></div></div>
+<dialog id="sign-dialog" class="sheet"><h2>Change signs</h2><p>Choose the name shown at reception, on the entrance glass and in the meeting room.</p><div class="choices"><button data-brand="aster">Aster Quay</button><button data-brand="tern">Tern Court</button></div><form method="dialog"><button>Back to the office</button></form></dialog>
+<dialog id="station-dialog" class="sheet"><small id="station-category"></small><h2 id="station-title"></h2><p id="station-copy"></p><form method="dialog"><button>Back to the office</button></form></dialog>
+<dialog id="info-dialog" class="sheet"><h2>Information stops</h2><div id="station-list"></div><label><input type="checkbox" id="auto-open"> Open cards as I approach</label><form method="dialog"><button>Back to the office</button></form></dialog>
+</main><script type="module" src="../meeting-native/native.js?v=office-r2"></script></body></html>

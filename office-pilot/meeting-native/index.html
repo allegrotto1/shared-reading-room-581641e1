@@ -1,8 +1,8 @@
 <!doctype html>
-<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><meta name="theme-color" content="#1b1720"><link rel="icon" href="data:,"><title>Meeting room · Hotel ESG walkthrough</title><link rel="stylesheet" href="./style.css"></head>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><meta name="theme-color" content="#1b1720"><link rel="icon" href="data:,"><title>Meeting room walkthrough</title><link rel="stylesheet" href="./style.css"></head>
 <body><main><canvas id="scene" aria-label="Interactive meeting room. Drag to look, tap the floor or use the movement controls to walk." tabindex="0"></canvas>
 <header class="hud"><div class="place"><span class="dot"></span>Meeting room</div><a href="review.html">Compare views <span aria-hidden="true">↗</span></a></header>
 <div class="pad" aria-label="Walking controls"><button data-key="w" aria-label="Walk forward">↑</button><button data-key="a" aria-label="Step left">←</button><button data-key="s" aria-label="Walk backwards">↓</button><button data-key="d" aria-label="Step right">→</button></div>
-<div class="toolbar"><button id="measure" aria-pressed="false">Measure walk</button><output id="result" aria-live="polite" hidden></output></div>
+<div class="toolbar"><button id="measure" aria-pressed="false">Measure walk</button><button id="half-step" hidden>Step right 0.50 m</button><output id="result" aria-live="polite" hidden></output></div>
 <p class="hints" id="hint">Drag to look · Tap the floor to walk</p>
-<div class="loading" role="status"><div><span class="eyebrow">HOTEL ESG WALKTHROUGH</span><h1>Meeting room</h1><p id="status">Opening the room…</p><div class="bar"><i></i></div></div></div></main><script type="module" src="./native.js"></script></body></html>
+<div class="loading" role="status"><div><h1>Meeting room</h1><p id="status">Opening the room…</p><div class="bar"><i></i></div></div></div></main><script type="module" src="./native.js?v=office-r2"></script></body></html>
