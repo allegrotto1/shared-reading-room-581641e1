@@ -79,7 +79,17 @@ function makeSign(B, scene) {
   print.emissiveTexture = tex;
   face.isPickable = false;
   face.material = print;
-  face.setEnabled(false);
+  // Native meeting plaque faces +X in Blender. The film is on the room side
+  // of the entrance glass, below the separate bilingual emergency sign.
+  const meeting=face.clone('Meeting room hotel artwork');
+  meeting.position.set(.128,2.05,-3.80);
+  meeting.rotation.y=-Math.PI/2;
+  meeting.scaling.set(1.798/w,.438/height,1);
+  const door=face.clone('Entrance glass hotel artwork');
+  door.position.set(-.65,1.45,4.133);
+  door.scaling.set(.56/w,.137/height,1);
+  const signs=[face,meeting,door];
+  for(const item of signs){item.isPickable=false;item.freezeWorldMatrix();item.setEnabled(false);}
 
   const update = key => {
     const [name, symbol] = brands[key], ctx = tex.getContext();
@@ -113,10 +123,10 @@ function makeSign(B, scene) {
     ctx.font = '600 42px system-ui, sans-serif';
     ctx.fillText('H O T E L', 378, 231);
     tex.update(true);
-    face.setEnabled(true);
+    for(const item of signs)item.setEnabled(true);
   };
   update('aster');
-  face.setEnabled(false);
+  for(const item of signs)item.setEnabled(false);
   return { update, prepare: () => print.forceCompilationAsync(face) };
 }
 

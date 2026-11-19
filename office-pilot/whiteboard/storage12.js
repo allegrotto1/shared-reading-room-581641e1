@@ -1,11 +1,11 @@
 const doc=document.documentElement;
 const sealed=doc.hasAttribute('data-protected');
 const guest=!sealed&&doc.hasAttribute('data-public-hotel');
-const guestBase=new URL('./hotel-demo/v1/',import.meta.url);
-const guestRevision='4aed2e13d198b7c7a2a6f99948ae47aa281efffc';
+const guestBase=new URL('./hotel-demo/v2/',import.meta.url);
+const guestRevision='9328728563d66266187d249c01c35372dcf5b7db';
 const guestRepo='allegrotto1/shared-reading-room-581641e1';
-const guestFolder='office-pilot/whiteboard/hotel-demo/v1/';
-const guestAsset=/^(?:(?:layout\.json|(?:geometry|distance-grid)\.bin\.gz)|(?:board|world)\.png|floor-[0-3]\.bin\.gz|(?:exterior|branches|world-right)\.webp|view-\d{2}(?:\.webp|-depth\.bin\.gz))$/;
+const guestFolder='office-pilot/whiteboard/hotel-demo/v2/';
+const guestAsset=/^(?:(?:layout\.json|(?:geometry|distance-grid)\.bin\.gz)|(?:board|world)\.png|floor-[0-3]\.bin\.gz|(?:exterior|branches|world-right|dispenser)\.webp|(?:lite|view)-\d{2}(?:\.webp|-depth\.bin\.gz))$/;
 const base=new URL('../../',location.href);
 const encoder=new TextEncoder();
 let key,table;
@@ -44,7 +44,7 @@ export async function readFile(id){
     const api=new URL('https://api.github.com/repos/'+owner+'/'+repo+'/contents/'+path.join('/'));
     api.searchParams.set('ref',revision);endpoints.push({url:api,accept:'application/vnd.github.raw+json'});
   }
-  const retry=new URL(uri);retry.searchParams.set('retry','1');endpoints.push({url:retry});
+  const retry=new URL(endpoints[0].url);retry.searchParams.set('retry','1');endpoints.push({url:retry});
   for(const [i,entry] of endpoints.entries()){
     try{
       const res=await fetch(entry.url,{referrerPolicy:'no-referrer',credentials:'omit',

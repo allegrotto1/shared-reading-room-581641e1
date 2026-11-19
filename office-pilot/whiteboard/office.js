@@ -1,15 +1,15 @@
-import {enter,readFile,transportHealth} from './storage12.js?v=guest-1';
-import {Navigation} from './nav-floor.js?v=guest-1';
-import {CaptureField} from './field.js?v=guest-1';
-import {lookAt,stepManual,stepGuide,destinations,previewPath} from './guide.js?v=guest-1';
-import {SourceTextures} from './textures12.js?v=guest-1';
-import {projectionMaterial} from './projection12.js';
-import {WaterMotion} from './water-motion.js';
+import {enter,readFile,transportHealth} from './storage12.js?v=hotel-15';
+import {Navigation} from './nav-floor.js?v=hotel-15';
+import {CaptureField} from './field.js?v=hotel-15';
+import {lookAt,stepManual,stepGuide,destinations,previewPath} from './guide.js?v=hotel-15';
+import {SourceTextures} from './textures12.js?v=hotel-15';
+import {projectionMaterial} from './projection12.js?v=hotel-15';
+import {WaterMotion} from './water-motion.js?v=hotel-15';
 const $=sel=>document.querySelector(sel),canvas=$('#scene'),qs=new URLSearchParams(location.search),keys=new Set();
 let vfov=Math.PI/3;
 const isEsgPilot=document.documentElement.hasAttribute('data-esg-pilot');
 let pilot,pilotTarget;
-const water=new WaterMotion();let waterWasActive=false;
+const water=new WaterMotion();let waterWasActive=false,dispenser;
 const view={xy:[],yaw:0,pitch:0},route={points:[]},mobile=matchMedia('(pointer:coarse)').matches;
 let B,engine,scene,cam,geo,material,layout,nav,field,sources,drag,ready=false,manual=false,dirty=true,last=0,lastDraw=null,stats=[],mapImage;
 const unzip=bytes=>new Response(new Blob([bytes]).stream().pipeThrough(new DecompressionStream('gzip'))).arrayBuffer();
@@ -33,6 +33,13 @@ function geometry(buffer){
   geo=new B.Mesh('POD office · Cycles geometry',scene);
   geo.setVerticesData('position',pos,false,3);geo.setVerticesData('boardFace',layer,false,1);geo.setIndices(index);
   geo.material=material;geo.freezeWorldMatrix();
+  if(layout.chunks?.length){
+    geo.releaseSubMeshes();
+    for(const [start,count,min,max,x0,y0,z0,x1,y1,z1] of layout.chunks){
+      const part=new B.SubMesh(0,min,max-min+1,start,count,geo,geo,false);
+      part.setBoundingInfo(new B.BoundingInfo(new B.Vector3(x0,y0,z0),new B.Vector3(x1,y1,z1)));
+    }
+  }
   const sky=B.MeshBuilder.CreateSphere('Exterior rays',{diameter:1400,segments:12},scene);
   sky.setVerticesData('boardFace',new Float32Array(sky.getTotalVertices()).fill(-1),false,1);sky.material=material;sky.isPickable=false;sky.freezeWorldMatrix();
   pilot?.mount(B,scene,pos,index,layout.eyeHeight);
@@ -44,7 +51,9 @@ function aim(){
   cam.fov=vfov;material.setVector3('visitorEye',new B.Vector3(x,h,-y));
 }
 function draw(settled=false){
-  dirty=false;aim();material.setFloat('waterRipple',water.age(performance.now()));if(sources.bind(view.xy,settled))dirty=true;
+  dirty=false;aim();const age=water.age(performance.now());
+  if(dispenser)dispenser.update(view.xy,layout.eyeHeight,age);else material.setFloat('waterRipple',age);
+  if(sources.bind(view.xy,settled))dirty=true;
   engine.beginFrame();try{scene.render();}finally{engine.endFrame();}
   pilot?.draw(cam,scene,engine);
   $('#place').textContent=nav.zone(view.xy).label;$('#stop').hidden=!route.points.length;mapUpdate();
@@ -69,7 +78,7 @@ function step(dt){
         sources.preview(upcoming.filter(p=>nav.safe(p)&&field.reachable(p)));
       }
       const test=[view.xy[0]+dt*1.5*dx,view.xy[1]+dt*1.5*dy];
-      if(nav.safe(test)&&sources.coverage(test)<.52){
+      if(nav.safe(test)&&sources.coverage(test)<.52&&!sources.progressive){
         if(!waitStart){waitStart=performance.now();waitEvents++;}
         if(performance.now()-waitStart>350){$('#hint').textContent='Loading the view ahead…';blocked=true;}
         return;
@@ -93,7 +102,8 @@ function frame(now){
   const elapsed=now-last;last=now;
   if(ready&&!manual){
     const moving=Boolean(keys.size||drag||route.points.length);
-    if(!pilot?.blocksMovement())step(Math.min(.060,elapsed/1000));
+    if(!document.hidden&&!pilot?.blocksMovement())step(Math.min(.125,elapsed/1000));
+    sources.refine(moving,now);
     const movingWater=water.age(now)>=0;if(movingWater||waterWasActive)dirty=true;waterWasActive=movingWater;
     if(!moving)lastDraw=null;
     if(dirty){if(moving&&lastDraw!==null){stats.push(now-lastDraw);if(!wholeTimingRun&&stats.length>3000)stats.shift();}draw();if(moving)lastDraw=now;}
@@ -102,7 +112,7 @@ function frame(now){
 }
 function state(timings=true){
   const a=engine._adapter?.info;
-  return {eye:[...view.xy,layout.eyeHeight],yaw:view.yaw,pitch:view.pitch,vfov,width:engine.getRenderWidth(),height:engine.getRenderHeight(),backend:engine.name,adapter:a?[a.vendor,a.architecture,a.description].filter(Boolean).join(' / '):engine.getGlInfo?.().renderer,active:sources.active.slice(),resident:sources.cache.size,tiles:[...sources.tiles.keys()],zone:nav.zone(view.xy).id,walking:route.points.length>0,waterBumps:water.count,waterAge:water.age(performance.now()),waitEvents,sourceWaitMs:Math.round(waitMs+(waitStart?performance.now()-waitStart:0)),media:timings?{recovered:[...transportHealth.recovered],failed:[...transportHealth.failed]}:undefined,frameTimes:timings?stats.slice():[]};
+  return {eye:[...view.xy,layout.eyeHeight],yaw:view.yaw,pitch:view.pitch,vfov,width:engine.getRenderWidth(),height:engine.getRenderHeight(),backend:engine.name,adapter:a?[a.vendor,a.architecture,a.description].filter(Boolean).join(' / '):engine.getGlInfo?.().renderer,active:sources.active.slice(),resident:sources.cache.size,tiles:[...sources.tiles.keys()],detail:sources.active.filter(id=>sources.cache.get(id)?.detail),zone:nav.zone(view.xy).id,walking:route.points.length>0,waterBumps:water.count,waterAge:water.age(performance.now()),waitEvents,sourceWaitMs:Math.round(waitMs+(waitStart?performance.now()-waitStart:0)),media:timings?{recovered:[...transportHealth.recovered],failed:[...transportHealth.failed]}:undefined,frameTimes:timings?stats.slice():[]};
 }
 function guide(to,destination=null){
   if(!ready)return;
@@ -142,7 +152,7 @@ canvas.addEventListener('pointermove',e=>{
 });
 canvas.addEventListener('pointerup',e=>{
  if(!drag||e.pointerId!==drag.id)return;
- if(!drag.moved&&!drag.wasWalking){const r=canvas.getBoundingClientRect(),hit=scene.pick(e.clientX-r.left,e.clientY-r.top,m=>m===geo);
+ if(!drag.moved&&!drag.wasWalking){const r=canvas.getBoundingClientRect(),hit=scene.pick(e.clientX-r.left,e.clientY-r.top,m=>m===geo||m===dispenser?.mesh);
  if(hit?.pickedPoint){
    if(hit.pickedPoint.y<.18)guide([hit.pickedPoint.x,-hit.pickedPoint.z]);
    else if(water.tap(hit.pickedPoint,view.xy,performance.now()))dirty=true;
@@ -161,7 +171,7 @@ $('#retry').onclick=()=>location.reload();
 async function boot(){
   if(!await enter())return;
   if(isEsgPilot){
-    const {createEsgPilot,signTarget}=await import('./esg-pilot.js?v=guest-1');
+    const {createEsgPilot,signTarget}=await import('./esg-pilot.js?v=hotel-15');
     pilotTarget=signTarget;
     pilot=createEsgPilot({canvas,stop,requestDraw:()=>{dirty=true;},go:id=>{setMap(false);guide(layout.targets[id],id);}});
   }
@@ -172,21 +182,25 @@ async function boot(){
   if(qs.get('graphics')!=='webgl'&&navigator.gpu&&await B.WebGPUEngine.IsSupportedAsync){
     try{engine=new B.WebGPUEngine(canvas,{antialias:true,powerPreference:'high-performance'});await engine.initAsync();}catch(e){engine?.dispose();engine=null;}
   }
-  if(!engine)engine=new B.Engine(canvas,true,{preserveDrawingBuffer:true,stencil:true,powerPreference:'high-performance'});
+  if(!engine)engine=new B.Engine(canvas,true,{preserveDrawingBuffer:false,stencil:true,powerPreference:'high-performance'});
   engine.setHardwareScalingLevel(1/Math.min(devicePixelRatio,mobile?2:1.75));
   const gpuDevice=engine.isWebGPU?engine._device:null;gpuDevice?.pushErrorScope('validation');
   scene=new B.Scene(engine);scene.useRightHandedSystem=true;scene.clearColor=new B.Color4(.66,.68,.70,1);scene.skipPointerMovePicking=true;
   scene.imageProcessingConfiguration.toneMappingEnabled=false;
   cam=new B.FreeCamera('Visitor',B.Vector3.Zero(),scene);cam.minZ=.025;cam.maxZ=1050;scene.activeCamera=cam;
   material=projectionMaterial(B,scene,engine.isWebGPU===true);
-  sources=new SourceTextures(B,scene,material,field,mobile,()=>dirty=true);loading('Loading nearby Cycles views…',28);
-  const [mesh,ink,world]=await Promise.all([readFile('geometry.bin.gz').then(unzip),sources.colour('board.png'),sources.colour('world.png'),sources.settle(view.xy,false)]);
+  sources=new SourceTextures(B,scene,material,field,mobile,()=>dirty=true,layout.hotelMedia===2);loading('Loading nearby Cycles views…',28);
+  const bottle=layout.dispenser?Promise.all([import('./dispenser.js?v=hotel-15'),sources.colour('dispenser.webp')]):null;
+  const [mesh,ink,world,fixture]=await Promise.all([readFile('geometry.bin.gz').then(unzip),sources.colour('board.png'),sources.colour('world.png'),bottle,sources.settle(view.xy,false,false)]);
+  if(fixture)dispenser=fixture[0].makeDispenser(B,scene,layout.dispenser,fixture[1]);
   geometry(mesh);material.setTexture('inkBoard',ink);material.setTexture('exteriorWorld',sources.rightWorld||world);
   setupMap();loading('Aligning the view…',88);aim();sources.bind(view.xy,true);
-  await Promise.all([material.forceCompilationAsync(geo),pilot?.prepare()]);draw(true);
+  dispenser?.update(view.xy,layout.eyeHeight,-1);
+  await Promise.all([material.forceCompilationAsync(geo),pilot?.prepare(),dispenser?.prepare()]);draw(true);
   if(gpuDevice){
     await gpuDevice.queue.onSubmittedWorkDone();
-    if(await gpuDevice.popErrorScope()){const retry=new URL(location.href);retry.searchParams.set('graphics','webgl');location.replace(retry);return;}
+    const gpuError=await gpuDevice.popErrorScope();
+    if(gpuError){console.warn('WebGPU validation during scene setup',gpuError.message);const retry=new URL(location.href);retry.searchParams.set('graphics','webgl');location.replace(retry);return;}
   }
   ready=true;$('#loading').hidden=true;document.body.dataset.ready='true';
   pilot?.loaded();

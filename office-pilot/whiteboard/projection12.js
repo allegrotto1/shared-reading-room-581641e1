@@ -31,11 +31,11 @@ export function projectionMaterial(B,scene,gpu){
       vec2 dx=dFdx(uv),dy=dFdy(uv);dx.x-=floor(dx.x+.5);dy.x-=floor(dy.x+.5);
       float waterShift=-atan(ripple*length(ray.xy),d)*.3183098862;
       vec3 colour=textureGrad(colour${i},uv+vec2(0.,waterShift),dx,dy).rgb;
-      vec2 dims=vec2(4096.,2048.);
+      vec2 dims=vec2(textureSize(depth${i},0));
       vec2 center=(floor(uv*dims)+.5)/dims;
       float z=texture2D(depth${i},center).r, error=abs(z-d), nearest=z;
       vec2 best=center;
-      for(int j=0;j<4;j++){
+      if(error>.006+.003*d)for(int j=0;j<4;j++){
         vec2 offset=vec2(j==0?1.:(j==1?-1.:0.),j==2?1.:(j==3?-1.:0.))/dims;
         float v=texture2D(depth${i},center+offset).r;nearest=min(nearest,v);
         if(abs(v-d)<error){best=center+offset;error=abs(v-d);}
@@ -55,13 +55,14 @@ export function projectionMaterial(B,scene,gpu){
       var dx=dpdx(uv);var dy=dpdy(uv);dx.x-=floor(dx.x+.5);dy.x-=floor(dy.x+.5);
       let waterShift=-atan2(ripple*length(ray.xy),d)*.3183098862;
       var colour=textureSampleGrad(colour${i},colour${i}Sampler,uv+vec2f(0.,waterShift),dx,dy).rgb;
-      let dims=vec2f(4096.,2048.);let center=(floor(uv*dims)+.5)/dims;
+      let dims=vec2f(textureDimensions(depth${i},0));let center=(floor(uv*dims)+.5)/dims;
       let z=textureSampleLevel(depth${i},depth${i}Sampler,center,0.).r;
       var err=abs(z-d);var nearest=z;var best=center;
       let off=array<vec2f,4>(vec2f(1.,0.),vec2f(-1.,0.),vec2f(0.,1.),vec2f(0.,-1.));
-      for(var j=0;j<4;j++){
+      if(err>.006+.003*d){for(var j=0;j<4;j++){
         let pos=center+off[j]/dims;let v=textureSampleLevel(depth${i},depth${i}Sampler,pos,0.).r;nearest=min(nearest,v);
         if(abs(v-d)<err){best=pos;err=abs(v-d);}
+      }
       }
       let tol=.009+.005*d;
       if(abs(z-d)>2.4*tol && err<tol){colour=textureSampleLevel(colour${i},colour${i}Sampler,best+vec2f(0.,waterShift),0.).rgb;}
@@ -86,8 +87,22 @@ export function projectionMaterial(B,scene,gpu){
       return .012*band*smoothstep(0.,.09,t)*exp(-2.8*t)*(sin(19.*t+17.*(p.y+.86))+.40*sin(29.*t-16.*(p.x-4.03)));
     }
     void main(){
+      vec3 eye=vec3(visitorEye.x,-visitorEye.z,visitorEye.y);
+      vec3 ray=normalize(P-eye);
+      // Only outdoor fragments whose sightline passed the physical meeting-room pane
+      // may carry the street photograph. Interior glazing uses its own Cycles pixels.
+      bool outside=board<-.5||board>2.5;
+      vec3 pane=eye+ray*((9.49-eye.y)/max(.00001,ray.y));
+      bool offWindow=outside && (ray.y<=0.||eye.y>=9.49||P.y<=9.49||pane.x<.10||pane.x>4.20||pane.z<1.075||pane.z>2.525);
+      // The supplemental facade was registered from this point at a 136 m radius.
+      vec3 origin=vec3(2.16,9.4,1.64),offset=eye-origin;
+      float bdot=dot(offset.xy,ray.xy),horiz=max(.00001,dot(ray.xy,ray.xy));
+      float t=(-bdot+sqrt(max(0.,bdot*bdot+horiz*(136.*136.-dot(offset.xy,offset.xy)))))/horiz;
+      vec3 fixedRay=normalize(offset+t*ray);
+      vec2 skyUV=vec2(.5+atan(fixedRay.x,fixedRay.y)*.1591549431,.5-asin(clamp(fixedRay.z,-1.,1.))*.3183098862);
       float ripple=waterWave(P,waterRipple);
-      vec4 a=from0(P,ripple),b=from1(P,ripple),c=from2(P,ripple),d=from3(P,ripple);
+      vec4 a=from0(P,ripple),b=vec4(0.),c=vec4(0.),d=vec4(0.);
+      if(weights.y>0.)b=from1(P,ripple);if(weights.z>0.)c=from2(P,ripple);if(weights.w>0.)d=from3(P,ripple);
       vec4 w=weights*max(vec4(1e-14),vec4(a.a,b.a,c.a,d.a));
       float confidence=clamp(2.*dot(w,vec4(1.)),0.,1.);w/=max(1e-16,dot(w,vec4(1.)));
       vec3 col=displayRGB(linearise(a.rgb)*w.x+linearise(b.rgb)*w.y+linearise(c.rgb)*w.z+linearise(d.rgb)*w.w);
@@ -115,12 +130,10 @@ ${slots.map(i=>`
       vec3 ink=texture2D(inkBoard,uv).rgb;
       float edge=min(min(uv.x,1.-uv.x),min(uv.y,1.-uv.y));
       float face=(board>.5 && board<1.5?1.:0.)*smoothstep(.014,.034,edge)*(1.-smoothstep(.001,.003,abs(P.y+1.993)));
-      vec3 ray=normalize(P-vec3(visitorEye.x,-visitorEye.z,visitorEye.y));
-      vec2 skyUV=vec2(.5+atan(ray.x,ray.y)*.1591549431,.5-asin(clamp(ray.z,-1.,1.))*.3183098862);
-      vec4 world=texture2D(exteriorWorld,skyUV);
+
       // Cross the two matched facade photographs gently at their common edge. Keep the near tree in depth.
-      if(rightStreetReady>.5 && board>3.5)col=mix(col,world.rgb,.72*world.a*smoothstep(.886,.983,atan(ray.x,ray.y)));
-      if(trimmed)discard;gl_FragColor=vec4(board<-.5?world.rgb:mix(col,ink,face),1.);
+      if(rightStreetReady>.5 && board>3.5){vec4 world=textureLod(exteriorWorld,skyUV,0.);col=mix(col,world.rgb,.72*world.a*smoothstep(.886,.983,atan(fixedRay.x,fixedRay.y)));}
+      if(trimmed||offWindow)discard;gl_FragColor=vec4(board<-.5?textureLod(exteriorWorld,skyUV,0.).rgb:mix(col,ink,face),1.);
     }`;
   const wgFragment=`
     varying P: vec3f;
@@ -138,8 +151,17 @@ ${slots.map(i=>`
       return .012*band*smoothstep(0.,.09,t)*exp(-2.8*t)*(sin(19.*t+17.*(p.y+.86))+.40*sin(29.*t-16.*(p.x-4.03)));
     }
     @fragment fn main(input:FragmentInputs)->FragmentOutputs{
-      let p=fragmentInputs.P;let ripple=waterWave(p,uniforms.waterRipple);
-      let a=from0(p,ripple);let b=from1(p,ripple);let c=from2(p,ripple);let d=from3(p,ripple);
+      let p=fragmentInputs.P;let visitor=uniforms.visitorEye;let eye=vec3f(visitor.x,-visitor.z,visitor.y);
+      let ray=normalize(p-eye);let board=fragmentInputs.board;
+      let pane=eye+ray*((9.49-eye.y)/max(.00001,ray.y));
+      let offWindow=(board<-.5||board>2.5) && (ray.y<=0.||eye.y>=9.49||p.y<=9.49||pane.x<.10||pane.x>4.20||pane.z<1.075||pane.z>2.525);
+      let offset=eye-vec3f(2.16,9.4,1.64);let bdot=dot(offset.xy,ray.xy);let horiz=max(.00001,dot(ray.xy,ray.xy));
+      let t=(-bdot+sqrt(max(0.,bdot*bdot+horiz*(136.*136.-dot(offset.xy,offset.xy)))))/horiz;
+      let fixedRay=normalize(offset+t*ray);
+      let skyUV=vec2f(.5+atan2(fixedRay.x,fixedRay.y)*.1591549431,.5-asin(clamp(fixedRay.z,-1.,1.))*.3183098862);
+      let ripple=waterWave(p,uniforms.waterRipple);
+      let a=from0(p,ripple);var b=vec4f(0.);var c=vec4f(0.);var d=vec4f(0.);
+      if(uniforms.weights.y>0.){b=from1(p,ripple);}if(uniforms.weights.z>0.){c=from2(p,ripple);}if(uniforms.weights.w>0.){d=from3(p,ripple);}
       var w=uniforms.weights*max(vec4f(1e-14),vec4f(a.a,b.a,c.a,d.a));
       let confidence=clamp(2.*dot(w,vec4f(1.)),0.,1.);w/=max(1e-16,dot(w,vec4f(1.)));
       var col=displayRGB(linearise(a.rgb)*w.x+linearise(b.rgb)*w.y+linearise(c.rgb)*w.z+linearise(d.rgb)*w.w);
@@ -168,11 +190,10 @@ ${slots.map(i=>`
       let ink=textureSample(inkBoard,inkBoardSampler,uv).rgb;
       let edge=min(min(uv.x,1.-uv.x),min(uv.y,1.-uv.y));
       let face=select(0.,1.,fragmentInputs.board>.5 && fragmentInputs.board<1.5)*smoothstep(.014,.034,edge)*(1.-smoothstep(.001,.003,abs(p.y+1.993)));
-      let eye=uniforms.visitorEye;let ray=normalize(p-vec3f(eye.x,-eye.z,eye.y));
-      let skyUV=vec2f(.5+atan2(ray.x,ray.y)*.1591549431,.5-asin(clamp(ray.z,-1.,1.))*.3183098862);
-      let world=textureSampleLevel(exteriorWorld,exteriorWorldSampler,skyUV,0.);
-      if(uniforms.rightStreetReady>.5 && fragmentInputs.board>3.5){col=mix(col,world.rgb,.72*world.a*smoothstep(.886,.983,atan2(ray.x,ray.y)));}
-      if(trimmed){discard;}fragmentOutputs.color=vec4f(select(mix(col,ink,face),world.rgb,fragmentInputs.board<-.5),1.);
+      if(uniforms.rightStreetReady>.5 && board>3.5){let world=textureSampleLevel(exteriorWorld,exteriorWorldSampler,skyUV,0.);col=mix(col,world.rgb,.72*world.a*smoothstep(.886,.983,atan2(fixedRay.x,fixedRay.y)));}
+      if(trimmed||offWindow){discard;}
+      var colour=mix(col,ink,face);if(board<-.5){colour=textureSampleLevel(exteriorWorld,exteriorWorldSampler,skyUV,0.).rgb;}
+      fragmentOutputs.color=vec4f(colour,1.);
     }`;
   store[shader+'VertexShader']=gpu?wgVertex:glVertex;
   store[shader+'FragmentShader']=gpu?wgFragment:glFragment;
