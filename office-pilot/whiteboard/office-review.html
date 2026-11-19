@@ -1,21 +1,68 @@
 <!doctype html>
-<html data-protected lang="zh-Hant"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="robots" content="noindex,nofollow"><meta name="referrer" content="no-referrer"><link rel="icon" href="data:,"><link rel="stylesheet" href="./review.css"><title>全辦公室漫遊實測 · POD 研究所</title></head>
-<body><main><nav><a href="./">← 由青框白板起步</a><a href="./?device=1">量度呢部裝置 ↗</a></nav>
-<header><h1>由白板行到窗邊</h1><p>同一條行走路線，左邊係 Blender Cycles 獨立重渲，右邊係 Babylon.js 實際畫面。</p></header>
-<p id="status" role="status">正在開啟實測紀錄…</p>
-<div id="report" hidden>
-<figure><video id="film" playsinline controls preload="metadata" aria-label="全辦公室同機位並排短片"></video><figcaption id="caption"></figcaption></figure>
-<section id="revision14"><h2>v14 更新 · 右窗、茶水間同酒店試玩</h2>
-<p>用 11 月 19 日補拍相片補返右窗樓面同街道，原有窗框同近景枝葉保留。茶水間重新輸出局部 Cycles 畫面，飲水機水樽有獨立水面；行到枱邊再按前進，或者行近後點飲水機，水面會短暫晃動。</p>
-<p><a href="./?start=pantry">試茶水間</a> · <a href="./esg.html">試酒店示範</a></p>
-<video id="rev14-water" playsinline controls preload="metadata" aria-label="碰撞後的水面變化"></video>
-<div id="rev14-proof"></div>
-<p>下方全辦公室並排短片及原檔下載係先前 v13 嘅驗收記錄。</p></section>
-<section><h2>五區行走驗收</h2><dl id="general"></dl><p id="limitations"></p></section>
+<html data-protected lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="robots" content="noindex,nofollow">
+<meta name="referrer" content="no-referrer">
+<meta name="description" content="睇茶水間水面晃動短片、會議室右窗補景同酒店招牌試玩紀錄。">
+<link rel="icon" href="data:,">
+<link rel="stylesheet" href="./review.css">
+<title>辦公室漫遊 v14 · 水面晃動短片同更新紀錄</title>
+</head>
+<body>
+<main>
+<nav aria-label="漫遊紀錄">
+  <a id="revision-link" href="#revision14">v14 更新紀錄</a>
+  <a id="full-proof-link" href="../../#view=office-full-proof">完整實測同 Blender 檔 ↗</a>
+</nav>
+<article id="revision14" aria-labelledby="revision-title">
+  <header>
+    <h1 id="revision-title">辦公室漫遊 v14</h1>
+    <p>水面晃動短片同更新紀錄</p>
+  </header>
+  <figure class="revision-film">
+    <video id="rev14-water" width="720" height="520" playsinline controls preload="metadata" poster="./revision14/revision-pantry.webp" aria-label="碰到枱邊後，飲水機水面晃動">
+      <source src="./revision14/revision-water.mp4" type="video/mp4">
+    </video>
+    <figcaption>碰到茶水間枱邊，水面晃一下，約兩秒後平靜。<a href="./revision14/revision-water.mp4">直接開啟短片</a></figcaption>
+  </figure>
+  <section aria-labelledby="revision-notes">
+    <h2 id="revision-notes">今次更新</h2>
+    <ul>
+      <li><strong>茶水間：</strong>局部補光並重渲，睇到飲水機樽入面嘅水位；碰到枱邊或行近點擊飲水機就會晃動。</li>
+      <li><strong>會議室右窗：</strong>用 11 月 19 日補拍相片補返右窗樓面同街道，保留原有窗框、窗簾同近景枝葉。</li>
+      <li><strong>酒店示範：</strong>可即時換接待處招牌，唔使重開漫遊，已睇嘅 ESG 資訊進度亦保留。</li>
+    </ul>
+    <p>互動漫遊需解鎖 Research Studio：<a href="./?start=pantry">試茶水間</a> · <a href="./esg.html">試酒店示範</a></p>
+    <div id="rev14-proof">
+      <figure><img src="./revision14/revision-window.webp" width="1280" height="580" loading="lazy" alt="向右斜望會議室窗，原先空白位置已補上街景"><figcaption>右窗 · 斜望角度</figcaption></figure>
+      <figure><img src="./revision14/revision-pantry.webp" width="1280" height="730" loading="lazy" alt="局部補光後，飲水機水樽內有清楚水位"><figcaption>茶水間 · 補光同水位</figcaption></figure>
+      <figure><img src="./revision14/revision-hotel.webp" width="1280" height="730" loading="lazy" alt="接待處原有牌框顯示 Tern Court Hotel"><figcaption>酒店示範 · 原招牌位置</figcaption></figure>
+    </div>
+  </section>
+</article>
+<div id="full-proof" hidden>
+  <nav aria-label="完整實測">
+    <a href="./">← 由青框白板起步</a><a href="./?device=1">量度呢部裝置 ↗</a>
+  </nav>
+  <header>
+    <h2>由白板行到窗邊 · v13 完整實測</h2>
+    <p>同一條行走路線，左邊係 Blender Cycles 獨立重渲，右邊係 Babylon.js 實際畫面。</p>
+  </header>
+  <p id="status" role="status">正在開啟實測紀錄…</p>
+  <div id="report" hidden>
+    <figure><video id="film" playsinline controls preload="metadata" aria-label="全辦公室同機位並排短片"></video><figcaption id="caption"></figcaption></figure>
+    <section><h2>五區行走驗收</h2><dl id="general"></dl><p id="limitations"></p></section>
 <section><h2>白板筆跡同遮擋</h2><figure><video id="board" playsinline controls preload="metadata" aria-label="白板橫移半米及倒行並排短片"></video><figcaption>正面行近、保持朝向橫移半米、斜望再倒行。兩邊各保留 960 × 640 原尺寸。</figcaption></figure><dl id="ink"></dl></section>
 <section><h2>原尺寸局部</h2><p>每張左邊係 Cycles，右邊係網頁。點圖可打開原尺寸。</p><div id="crops"></div></section>
 <section><h2>原畫同中途視角</h2><p>64 張 4096 × 2048 全景由 Blender 5.3 Cycles 按母檔燈光、材質及 AgX 色彩輸出，每張最多 64 次取樣。v13 參考影印機望向門口嘅畫面，將曝光由 +0.5 調至 −0.3 EV，並按參考圖修正「EXIT 出口」牌嘅比例、顏色同光面。</p><p>網頁用每個機位嘅位置同全尺寸深度，將附近原畫投影返場景幾何。轉頭、橫移同中途停步，都沿用同一個畫面。白板筆跡取自板面專屬墨跡材質嘅 Cycles 正投影。地氈用四幅正投影還原近睇嘅纖維。辦公區兩道屏風透明帶同室內玻璃窗後面嘅枱櫃，按原有幾何逐條視線量度深度。會議室窗外沿用九張現場相片建立嘅街景、前景枝葉同窗內機位嘅反光。兩個拍攝機位之間嘅畫面都經過重建。</p></section>
 <section><h2>裝置同畫格時間</h2><dl id="devices"></dl><p>用「量度呢部裝置」可以直接睇目前繪圖尺寸、畫格時間中位數同第 95 百分位。</p></section>
 <section><h2>逐格 Cycles 串流估算</h2><p id="stream"></p><p>試算一部 24 GB NVIDIA A10，按 US$1.29／GPU 小時，開機 100 小時係 US$129，另計稅項及其他服務。實際每格速度同香港連線延遲需要另行實測。 <a href="https://lambda.com/pricing" target="_blank" rel="noreferrer">Lambda 官方價格 ↗</a></p></section>
 <section><h2>編輯同覆核</h2><button id="blend">下載可編輯 Blender 檔</button><button id="cams">下載相機、驗收路線及逐格量度</button><p id="download-status" aria-live="polite"></p></section>
-</div></main><script type="module" src="./office-review.js"></script></body></html>
+  </div>
+</div>
+</main>
+<script type="module" src="./office-review.js?v=14-share"></script>
+</body>
+</html>

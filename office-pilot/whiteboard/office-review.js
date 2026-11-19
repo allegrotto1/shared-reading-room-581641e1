@@ -21,7 +21,21 @@ async function source(){
  }catch(e){$('download-status').textContent='下載中斷，可以再試一次。';}finally{b.disabled=false;}
 }
 async function show(){
- if(!await enter(true))return;
+ // The v14 media and notes are plain static files. Open the older report
+ // only for an existing Studio session, without redirecting public readers.
+ if(location.hash==='#revision14'||!await enter(true,false))return;
+ const updateView=()=>{
+   const full=!location.hash||location.hash==='#full-proof';
+   $('revision14').hidden=full;
+   $('full-proof').hidden=!full;
+   if(location.hash){
+     const section=full?'full-proof':'revision14';
+     requestAnimationFrame(()=>$(section).scrollIntoView());
+   }
+ };
+ $('full-proof-link').href='#full-proof';
+ addEventListener('hashchange',updateView);
+ updateView();
  const r=await json('review.json'),a=r.office,b=r.board;
  $('caption').textContent=a.metres+' 米 · '+a.seconds+' 秒 · '+a.frames+' 個獨立重渲機位。每邊 960 × 640，按實際行走時間同步播放。一般每秒抽四格，較接近輸入機位嘅畫格留空，以最近嘅獨立格顯示。';
  add('general','五區整體','RGB 平均絕對誤差 '+a.mae+' / 255，亮度結構相似度（SSIM）'+a.ssim+'。');
@@ -36,17 +50,6 @@ async function show(){
  $('blend').onclick=source;$('cams').onclick=async()=>{try{save(new Blob([await readFile('cameras.json')],{type:'application/json'}),'POD-office-cameras-and-walk.json');}catch(e){$('download-status').textContent='下載中斷，可以再試一次。';}};
  $('status').textContent='';$('report').hidden=false;
  const mediaURL=async(id,type)=>URL.createObjectURL(new Blob([await readFile(id)],{type}));
- if($('rev14-proof')){
-   const extras=[['revision-window.webp','右窗 · 斜望角度'],['revision-pantry.webp','茶水間 · 補光同水位'],['revision-hotel.webp','獨立酒店試玩 · 原招牌位置']];
-   void mediaURL('revision-water.mp4','video/mp4').then(url=>{ $('rev14-water').src=url; }).catch(()=>{ $('rev14-water').hidden=true; });
-   for(const [id,label] of extras){
-     void mediaURL(id,'image/webp').then(url=>{
-       const fig=document.createElement('figure'),image=document.createElement('img'),caption=document.createElement('figcaption');
-       image.alt=label;image.loading='lazy';image.src=url;caption.textContent=label;
-       fig.append(image,caption);$('rev14-proof').append(fig);
-     }).catch(()=>{});
-   }
- }
  const crops=[['ink-100.png','青框白板 · 白板筆起收筆'],['desk-100.png','橫移半米 · 椅扶手及屏風'],['door-100.png','連接通道 · 玻璃門腳及地氈'],['plant-100.png','入口 · 黃金樹葉片及花盆'],['office-100.png','辦公區 · 影印機'],['window-100.png','會議室 · 窗外街景'],['exit-sign-100.png','門口 · EXIT 出口牌']];
  await Promise.all([mediaURL('walk-comparison.mp4','video/mp4').then(v=>$('film').src=v),mediaURL('board-walk.mp4','video/mp4').then(v=>$('board').src=v),...crops.map(async([id,label])=>{
   const fig=document.createElement('figure'),link=document.createElement('a'),im=document.createElement('img'),caption=document.createElement('figcaption');
