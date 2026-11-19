@@ -1,6 +1,6 @@
 import { Navigation } from '../whiteboard/nav-floor.js';
 import { stepGuide, stepManual } from '../whiteboard/guide.js';
-import { makeSurfaceFactory } from './surface-material.js';
+import { makeSurfaceFactory } from './surface-material.js?v=office-r3';
 const element=id=>document.getElementById(id);
 const canvas=element('scene'),status=element('status'),params=new URLSearchParams(location.search);
 const full=document.documentElement.dataset.walk==='office';
@@ -48,7 +48,8 @@ function expandGeometry(spec,source) {
   return out;
 }
 async function packet(name,base=meetingAssets){
-  const [spec,blob]=await Promise.all([get(new URL(name+'.json',base)).then(r=>r.json()),unpack(new URL(name+'.bin.gz',base))]);
+  const revision=base===meetingAssets&&name==='street'?'?v=survey-r2':'';
+  const [spec,blob]=await Promise.all([get(new URL(name+'.json'+revision,base)).then(r=>r.json()),unpack(new URL(name+'.bin.gz'+revision,base))]);
   return [spec,expandGeometry(spec,blob)];
 }
 function install(spec,bytes,factory){
@@ -145,7 +146,7 @@ function controls(){
 async function main(){
   controls();
   const payload=full?Promise.all([packet('office',officeAssets),packet('threshold',officeAssets),get(new URL('plan.json',officeAssets)).then(r=>r.json())]):Promise.all([packet('room'),packet('street'),get(new URL('navigation.json',meetingAssets)).then(r=>r.json())]);
-  const extensions=full?Promise.all([import('../office-native/office.js'),import('../office-native/bottle.js'),unpack(new URL('bottle.json.gz',officeAssets)).then(b=>JSON.parse(new TextDecoder().decode(b)))]):null;
+  const extensions=full?Promise.all([import('../office-native/office.js?v=office-r3'),import('../office-native/bottle.js?v=office-r3'),unpack(new URL('bottle.json.gz',officeAssets)).then(b=>JSON.parse(new TextDecoder().decode(b)))]):null;
   await bundle();if(params.get('graphics')!=='webgl'&&navigator.gpu&&await B.WebGPUEngine.IsSupportedAsync){
     try{engine=new B.WebGPUEngine(canvas,{antialias:true,powerPreference:'high-performance'});await engine.initAsync();}catch{engine?.dispose();engine=null;}
   }

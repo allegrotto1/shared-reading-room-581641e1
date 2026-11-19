@@ -1,5 +1,5 @@
 import {destinations,lookAt,meetingSignView} from '../whiteboard/guide.js';
-import {stations} from '../whiteboard/esg-pilot.js';
+import {stations} from '../whiteboard/esg-pilot.js?v=office-r3';
 const byId=id=>document.getElementById(id);
 export function officeControls(B,scene,cam,nav,config,view,route,stop,textures,query,invalidate){
   const canvas=byId('scene'),plan=byId('office-plan'),map=byId('map'),toggle=byId('plan-toggle'),marker=byId('object-info');
