@@ -35,7 +35,7 @@ export async function readFile(id){
     const raw=new URL('https://raw.githubusercontent.com/'+guestRepo+'/'+guestRevision+'/'+guestFolder+id);
     const edge=new URL('https://cdn.jsdelivr.net/gh/'+guestRepo+'@'+guestRevision+'/'+guestFolder+id);
     const local=['localhost','127.0.0.1','[::1]'].includes(location.hostname);
-    if(!local)endpoints.splice(0,endpoints.length,{url:edge},{url:raw});
+    if(!local)endpoints.splice(0,endpoints.length,{url:raw},{url:edge});
   }
   if(sealed){
     // Every URL identifies the same immutable ciphertext. Authentication always happens in the browser.

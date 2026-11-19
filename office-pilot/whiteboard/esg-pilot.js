@@ -1,4 +1,4 @@
-import {meetingSignView} from './guide.js?v=hotel-15b';
+import {meetingSignView} from './guide.js?v=hotel-15c';
 
 const stations = [
   { id: 'copier', place: 'Copier', title: 'Digital receipts', category: 'Waste', at: [-.45, .42, 1.43], range: 2.05,

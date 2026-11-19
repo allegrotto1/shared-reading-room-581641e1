@@ -1,8 +1,8 @@
-import {enter,readFile,transportHealth} from './storage12.js?v=hotel-15';
+import {enter,readFile,transportHealth} from './storage12.js?v=hotel-15c';
 import {Navigation} from './nav-floor.js?v=hotel-15';
 import {CaptureField} from './field.js?v=hotel-15';
-import {lookAt,stepManual,stepGuide,destinations,previewPath,meetingSignView} from './guide.js?v=hotel-15b';
-import {SourceTextures} from './textures12.js?v=hotel-15';
+import {lookAt,stepManual,stepGuide,destinations,previewPath,meetingSignView} from './guide.js?v=hotel-15c';
+import {SourceTextures} from './textures12.js?v=hotel-15c';
 import {projectionMaterial} from './projection12.js?v=hotel-15';
 import {WaterMotion} from './water-motion.js?v=hotel-15';
 const $=sel=>document.querySelector(sel),canvas=$('#scene'),qs=new URLSearchParams(location.search),keys=new Set();
@@ -176,13 +176,18 @@ $('#retry').onclick=()=>location.reload();
 async function boot(){
   if(!await enter())return;
   if(isEsgPilot){
-    const {createEsgPilot,signTarget}=await import('./esg-pilot.js?v=hotel-15b');
+    const {createEsgPilot,signTarget}=await import('./esg-pilot.js?v=hotel-15c');
     pilotTarget=signTarget;
     pilot=createEsgPilot({canvas,stop,requestDraw:()=>{dirty=true;},go:id=>{setMap(false);guide(layout.targets[id],id);}});
   }
   const [config,dist]=await Promise.all([readFile('layout.json'),readFile('distance-grid.bin.gz').then(unzip),engineBundle()]);
   layout=JSON.parse(new TextDecoder().decode(config));nav=new Navigation(layout.walk);field=new CaptureField(layout,new Uint16Array(dist));
-  if(isEsgPilot&&layout.hotelMedia===2)layout.targets[meetingSignView.id]=meetingSignView.eye;
+  function fitMeetingSign(){
+    if(isEsgPilot&&layout.hotelMedia===2){
+      layout.targets[meetingSignView.id]=canvas.clientWidth<canvas.clientHeight*.85?meetingSignView.portraitEye:meetingSignView.eye;
+    }
+  }
+  fitMeetingSign();
   const initial=destinations.find(row=>row[0]===qs.get('start')&&row[0]!=='board'&&layout.targets[row[0]]);view.xy=(initial?layout.targets[initial[0]]:layout.spawn).slice();
   [view.yaw,view.pitch]=lookAt(view.xy,layout.eyeHeight,initial?(hotelSignTarget(initial[0])||initial[2]):(pilotTarget||layout.target));
   if(qs.get('graphics')!=='webgl'&&navigator.gpu&&await B.WebGPUEngine.IsSupportedAsync){
@@ -210,7 +215,7 @@ async function boot(){
   }
   ready=true;$('#loading').hidden=true;document.body.dataset.ready='true';
   pilot?.loaded();
-  addEventListener('resize',()=>{engine.resize();dirty=true;});
+  addEventListener('resize',()=>{engine.resize();fitMeetingSign();dirty=true;});
   if(qs.has('review')){
     window.officeQA={state,resetTimes:()=>{stats=[];lastDraw=null;wholeTimingRun=true;},freeze:(hide=true)=>{manual=true;stop();$('#viewer').classList.toggle('measuring',hide);},
       optics:(height,verticalFov)=>{if(height<1||height>2.1||verticalFov<.5||verticalFov>1.6)throw Error('Camera range');layout.eyeHeight=height;vfov=verticalFov;dirty=true;},

@@ -1,5 +1,5 @@
 // Blender floor coordinates for a readable, walkable view of the interior plaque.
-export const meetingSignView={id:'meeting-sign',eye:[2.15,3.60],art:[.128,3.80,2.05]};
+export const meetingSignView={id:'meeting-sign',eye:[2.15,3.60],portraitEye:[3.85,5.10],art:[.128,3.80,2.05]};
 export const destinations=[
  ['board','Teal-framed whiteboard',[2.31,-1.993,1.0]],['reception','Reception',[-.52,-4.,1.45]],['plant','ZZ plant',[-1.436,-2.68,1.08]],
  ['office','Workstations',[-2.50,-.64,1.05]],['copier','Copier',[-.23,.29,.95]],['pantry','Pantry',[4.02,-.90,1.39]],

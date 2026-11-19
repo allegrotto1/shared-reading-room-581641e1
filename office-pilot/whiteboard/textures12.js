@@ -1,4 +1,4 @@
-import {readFile} from './storage12.js?v=hotel-15';
+import {readFile} from './storage12.js?v=hotel-15c';
 import {compactWeights} from './field.js?v=guest-1';
 export const carpetRects=[[-4.75,-4.12,-.15,2.28],[-.15,-4.12,4.45,2.28],[-.1,1.20,4.4,5.42],[-.1,5.42,4.4,9.64]];
 class PixelDecoder{
