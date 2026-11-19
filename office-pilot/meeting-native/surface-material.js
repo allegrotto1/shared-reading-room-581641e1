@@ -6,8 +6,8 @@ export function makeSurfaceFactory(B,scene,gpu,textures,eye){
   const wgv=`#include<sceneUboDeclaration>
   attribute position:vec3f;attribute normal:vec3f;attribute uv:vec2f;varying P:vec3f;varying N:vec3f;varying T:vec2f;
   @vertex fn main(input:VertexInputs)->FragmentInputs{let p=vertexInputs.position;let n=vertexInputs.normal;vertexOutputs.P=vec3f(p.x,-p.z,p.y);vertexOutputs.N=vec3f(n.x,-n.z,n.y);vertexOutputs.T=vec2f(vertexInputs.uv.x,1.-vertexInputs.uv.y);vertexOutputs.position=scene.viewProjection*vec4f(p,1.);}`;
-  const glf=`precision highp float;varying vec3 P;varying vec3 N;varying vec2 T;uniform vec3 eye;uniform vec4 props;uniform float classify;uniform float finish;uniform sampler2D officeMap;uniform sampler2D softMap;uniform sampler2D baked;uniform sampler2D probe;uniform sampler2D weave;
-  void main(){vec4 pixel=texture2D(baked,T);vec3 v=normalize(eye-P),n=normalize(N);if(dot(n,v)<0.)n=-n;
+  const glf=`precision highp float;varying vec3 P;varying vec3 N;varying vec2 T;uniform vec3 eye;uniform vec4 props;uniform vec2 mirrorClip;uniform float classify;uniform float finish;uniform sampler2D officeMap;uniform sampler2D softMap;uniform sampler2D baked;uniform sampler2D probe;uniform sampler2D weave;
+  void main(){if(mirrorClip.x*(P.x-mirrorClip.y)>.0005)discard;vec4 pixel=texture2D(baked,T);vec3 v=normalize(eye-P),n=normalize(N);if(dot(n,v)<0.)n=-n;
     vec3 r=reflect(-v,n);vec3 env=texture2D(probe,vec2(.5+atan(r.x,r.y)*.159155,.5-asin(clamp(r.z,-1.,1.))*.31831)).rgb;
     if(props.z>0.){float t=(9.487-eye.y)/(P.y-eye.y);vec3 hit=eye+t*(P-eye);if(t<=0.||t>=1.||hit.x<.096||hit.x>4.204||hit.z<1.070||hit.z>2.53||pixel.a<.43)discard;}
     if(classify>.5){gl_FragColor=vec4(vec3(props.w),1.);return;}
@@ -36,9 +36,9 @@ export function makeSurfaceFactory(B,scene,gpu,textures,eye){
       }
     }
     gl_FragColor=vec4(col,1.);}`;
-  const wgf=`varying P:vec3f;varying N:vec3f;varying T:vec2f;uniform eye:vec3f;uniform props:vec4f;uniform classify:f32;uniform finish:f32;var officeMapSampler:sampler;var officeMap:texture_2d<f32>;var softMapSampler:sampler;var softMap:texture_2d<f32>;
+  const wgf=`varying P:vec3f;varying N:vec3f;varying T:vec2f;uniform eye:vec3f;uniform props:vec4f;uniform mirrorClip:vec2f;uniform classify:f32;uniform finish:f32;var officeMapSampler:sampler;var officeMap:texture_2d<f32>;var softMapSampler:sampler;var softMap:texture_2d<f32>;
     var weaveSampler:sampler;var weave:texture_2d<f32>;var bakedSampler:sampler;var baked:texture_2d<f32>;var probeSampler:sampler;var probe:texture_2d<f32>;
-    @fragment fn main(input:FragmentInputs)->FragmentOutputs{let P=fragmentInputs.P;let prop=uniforms.props;let eye=uniforms.eye;
+    @fragment fn main(input:FragmentInputs)->FragmentOutputs{let P=fragmentInputs.P;let prop=uniforms.props;let eye=uniforms.eye;let clip=uniforms.mirrorClip;if(clip.x*(P.x-clip.y)>.0005){discard;}
       let pixel=textureSample(baked,bakedSampler,fragmentInputs.T);let v=normalize(eye-P);var n=normalize(fragmentInputs.N);if(dot(n,v)<0.){n=-n;}
       let r=reflect(-v,n);let env=textureSampleLevel(probe,probeSampler,vec2f(.5+atan2(r.x,r.y)*.159155,.5-asin(clamp(r.z,-1.,1.))*.31831),2.).rgb;
       if(prop.z>0.){let t=(9.487-eye.y)/(P.y-eye.y);let hit=eye+t*(P-eye);if(t<=0.||t>=1.||hit.x<.096||hit.x>4.204||hit.z<1.070||hit.z>2.53||pixel.a<.43){discard;}}
@@ -86,8 +86,8 @@ export function makeSurfaceFactory(B,scene,gpu,textures,eye){
         finish=4;strength=name.includes('monitor')?.62:name.includes('abs')?.16:.23;
       }
     }
-    const mat=new B.ShaderMaterial(part.name,scene,code,{attributes:['position','normal','uv'],uniforms:gpu?['eye','props','classify','finish']:['worldViewProjection','eye','props','classify','finish'],uniformBuffers:gpu?['Scene']:[],samplers:['baked','probe','weave','officeMap','softMap'],shaderLanguage:gpu?B.ShaderLanguage.WGSL:B.ShaderLanguage.GLSL});
-    mat.setFloat('finish',finish);mat.setTexture('officeMap',textures.officeprobe||textures.probe);mat.setTexture('softMap',textures.softprobe||textures.probe);mat.backFaceCulling=false;mat.setTexture('baked',textures[desc.tex]);mat.setTexture('probe',textures.probe);mat.setTexture('weave',textures.weave);
+    const mat=new B.ShaderMaterial(part.name,scene,code,{attributes:['position','normal','uv'],uniforms:gpu?['eye','props','classify','finish','mirrorClip']:['worldViewProjection','eye','props','classify','finish','mirrorClip'],uniformBuffers:gpu?['Scene']:[],samplers:['baked','probe','weave','officeMap','softMap'],shaderLanguage:gpu?B.ShaderLanguage.WGSL:B.ShaderLanguage.GLSL});
+    mat.setVector2('mirrorClip',B.Vector2.Zero());mat.setFloat('finish',finish);mat.setTexture('officeMap',textures.officeprobe||textures.probe);mat.setTexture('softMap',textures.softprobe||textures.probe);mat.backFaceCulling=false;mat.setTexture('baked',textures[desc.tex]);mat.setTexture('probe',textures.probe);mat.setTexture('weave',textures.weave);
     mat.setVector4('props',new B.Vector4(strength,desc.rough??.72,['branch','city','extension','sky'].includes(part.role)?1:(part.role==='floor'?-1:0),part.role==='chair'?1:0));
     mat.setVector3('eye',eye);mat.setFloat('classify',0);return mat;
   };

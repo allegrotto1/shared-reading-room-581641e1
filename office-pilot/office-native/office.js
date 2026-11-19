@@ -33,7 +33,14 @@ export function officeControls(B,scene,cam,nav,config,view,route,stop,textures,q
     Object.assign(route,{points:path,autoLook:true,destination:id,end,lookTarget:id==='reception'?signDefs[0][1]:points[id]?.point});return true;
   }
   const start=query.get('start'),target=points[start]&&targetFor(start);
-  if(target&&nav.safe(target)){view.xy=[...target];[view.yaw,view.pitch]=lookAt(target,1.62,start==='reception'?signDefs[0][1]:points[start].point);started=start!=='reception';}
+  const portrait=canvas.clientWidth<canvas.clientHeight*.85;
+  const glassViews={
+    'interior-glass':portrait?[[1.25,3.31],[.20,1.484,1.757]]:[[.97,2.52],[.20,1.02,1.72]],
+    'desk-glass':portrait?[[-.86,1.08],[-1.66,-.970,1.316]]:[[.76,-1.85],[-1.66,-1.95,1.17]]
+  };
+  const glassView=Object.hasOwn(glassViews,start)&&glassViews[start];
+  if(glassView&&nav.safe(glassView[0])){view.xy=[...glassView[0]];[view.yaw,view.pitch]=lookAt(view.xy,1.62,glassView[1]);}
+  else if(target&&nav.safe(target)){view.xy=[...target];[view.yaw,view.pitch]=lookAt(target,1.62,start==='reception'?signDefs[0][1]:points[start].point);started=start!=='reception';}
   else{const entry=[-.55,-3.62];view.xy=nav.safe(entry)?entry:nav.nearest(entry,.85);view.yaw=.38;view.pitch=-.06;}
   const floor=byId('destinations');
   for(const id of ['reception','board','office','plant','copier','pantry','meeting','meeting-sign','window']){

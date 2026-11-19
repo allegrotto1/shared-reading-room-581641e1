@@ -1,0 +1,75 @@
+{
+  "ior": 1.52,
+  "panes": [
+    {
+      "name": "Interior window | fixed glass",
+      "group": "window",
+      "min": [
+        0.197,
+        -0.002,
+        1.118
+      ],
+      "max": [
+        0.203,
+        2.152,
+        2.442
+      ]
+    },
+    {
+      "name": "Plant screen | glass 1",
+      "group": "screens",
+      "min": [
+        -1.662,
+        -3.7495,
+        1.034
+      ],
+      "max": [
+        -1.656,
+        -3.1005,
+        1.266
+      ]
+    },
+    {
+      "name": "Plant screen | glass 2",
+      "group": "screens",
+      "min": [
+        -1.662,
+        -3.0595,
+        1.034
+      ],
+      "max": [
+        -1.656,
+        -2.4105,
+        1.266
+      ]
+    },
+    {
+      "name": "Middle screen | glass 1",
+      "group": "screens",
+      "min": [
+        -1.663,
+        -1.7095,
+        1.034
+      ],
+      "max": [
+        -1.657,
+        -0.9455,
+        1.386
+      ]
+    },
+    {
+      "name": "Middle screen | glass 2",
+      "group": "screens",
+      "min": [
+        -1.663,
+        -0.9045,
+        1.034
+      ],
+      "max": [
+        -1.657,
+        -0.1405,
+        1.386
+      ]
+    }
+  ]
+}

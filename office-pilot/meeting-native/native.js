@@ -1,6 +1,6 @@
 import { Navigation } from '../whiteboard/nav-floor.js';
 import { stepGuide, stepManual } from '../whiteboard/guide.js';
-import { makeSurfaceFactory } from './surface-material.js?v=office-r3';
+import { makeSurfaceFactory } from './surface-material.js?v=inside-glass-1';
 const element=id=>document.getElementById(id);
 const canvas=element('scene'),status=element('status'),params=new URLSearchParams(location.search);
 const full=document.documentElement.dataset.walk==='office';
@@ -9,7 +9,7 @@ const officeAssets=new URL('../office-native/assets/',import.meta.url);
 const review=params.has('review'),view={xy:[1.12,1.76],yaw:.20,pitch:-.125},route={points:[],autoLook:false};
 const keys=new Set(),materials=new Map(),cameraEye={};let B,engine,scene,cam,nav,ready=false,dirty=true,drag,measurement=null;
 let lastState='',last=0,firstReady=0;
-let office,bottle,testStep,wingReady=false,wingError=false,wingLoad,waitingAtDoor=false;
+let office,bottle,prepareReflections,testStep,wingReady=false,wingError=false,wingLoad,waitingAtDoor=false;
 function clearMotion(){keys.clear();route.points=[];for(const el of document.querySelectorAll('[data-key]'))el.removeAttribute('data-active');}
 async function get(url){const res=await fetch(url);if(!res.ok)throw Error('Could not open '+url);return res;}
 async function unpack(url){return new Response((await get(url)).body.pipeThrough(new DecompressionStream('gzip'))).arrayBuffer();}
@@ -146,7 +146,13 @@ function controls(){
 async function main(){
   controls();
   const payload=full?Promise.all([packet('office',officeAssets),packet('threshold',officeAssets),get(new URL('plan.json',officeAssets)).then(r=>r.json())]):Promise.all([packet('room'),packet('street'),get(new URL('navigation.json',meetingAssets)).then(r=>r.json())]);
-  const extensions=full?Promise.all([import('../office-native/office.js?v=office-r3'),import('../office-native/bottle.js?v=office-r3'),unpack(new URL('bottle.json.gz',officeAssets)).then(b=>JSON.parse(new TextDecoder().decode(b)))]):null;
+  const extensions=full?Promise.all([
+    import('../office-native/office.js?v=inside-glass-1'),
+    import('../office-native/bottle.js?v=office-r3'),
+    unpack(new URL('bottle.json.gz',officeAssets)).then(b=>JSON.parse(new TextDecoder().decode(b))),
+    import('../office-native/glazing.js?v=1'),
+    get(new URL('glazing.json',officeAssets)).then(r=>r.json())
+  ]):null;
   await bundle();if(params.get('graphics')!=='webgl'&&navigator.gpu&&await B.WebGPUEngine.IsSupportedAsync){
     try{engine=new B.WebGPUEngine(canvas,{antialias:true,powerPreference:'high-performance'});await engine.initAsync();}catch{engine?.dispose();engine=null;}
   }
@@ -163,9 +169,10 @@ async function main(){
     for(const mat of Object.keys(first[0].materials))if(mat.includes('whiteboard · deep blue marker'))first[0].materials[mat].tex='ink';
     const nearTextures=[...new Set(Object.values(second[0].materials).map(m=>m.tex))].filter(k=>!textures[k]);
     await Promise.all(nearTextures.map(async k=>{textures[k]=await loadTexture(k);}));
-    const [controlsModule,bottleModule,water]=await extensions;
+    const [controlsModule,bottleModule,water,glazingModule,glassLayout]=await extensions;
     office=controlsModule.officeControls(B,scene,cam,nav,layout,view,route,clearMotion,textures,params,()=>{dirty=true;});
     bottle=bottleModule.installBottle(B,scene,water,textures.officeprobe);
+    prepareReflections=glazingModule.installGlazing(B,scene,cam,glassLayout,materials,cameraEye.value);
   }
   install(...first,factory);install(...second,factory);
   async function loadMeeting(){
@@ -188,10 +195,11 @@ async function main(){
   }
   if(full){try{await requestMeeting();}catch{if(view.xy[1]>1.25){view.xy=[1.06,.94];view.yaw=0;view.pitch=0;}}}
 
-  moveCamera();await scene.whenReadyAsync();
+  moveCamera();prepareReflections?.();await scene.whenReadyAsync();
   if(review)window.nativeQA={ready:true,state:snapshot,walkable:p=>nav.safe(p),place(p){view.xy=p.slice(0,2);view.yaw=p[2];view.pitch=p[3];dirty=true;},async pose(p,id=false){
     clearMotion();view.xy=p.slice(0,2);view.yaw=p[2];view.pitch=p[3];
     for(const mat of materials.values())mat.setFloat('classify',id?1:0);
+    for(const mesh of scene.meshes)if(mesh.metadata?.role==='interior-glazing')mesh.isVisible=!id;
     scene.clearColor=id?new B.Color4(0,0,0,1):new B.Color4(.72,.77,.82,1);dirty=true;
     await new Promise(resolve=>requestAnimationFrame(()=>requestAnimationFrame(resolve)));
   }};
@@ -223,7 +231,7 @@ async function main(){
     if(measurement&&raw>0&&moving)measurement.frames.push(raw);
     const redraw=moving||dirty||!ready;
     if(moving||dirty){moveCamera();dirty=false;lastState=s;}
-    if(redraw||!full)scene.render();
+    if(redraw||!full){prepareReflections?.();scene.render();}
     office?.update(now,Boolean(moving&&lastState&&ready));
     if(!ready){firstReady=performance.now();ready=true;document.querySelector('.loading').hidden=true;document.body.dataset.ready='true';}
   });
