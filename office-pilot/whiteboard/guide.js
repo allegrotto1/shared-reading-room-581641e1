@@ -1,7 +1,10 @@
+// Blender floor coordinates for a readable, walkable view of the interior plaque.
+export const meetingSignView={id:'meeting-sign',eye:[2.15,3.60],art:[.128,3.80,2.05]};
 export const destinations=[
  ['board','Teal-framed whiteboard',[2.31,-1.993,1.0]],['reception','Reception',[-.52,-4.,1.45]],['plant','ZZ plant',[-1.436,-2.68,1.08]],
  ['office','Workstations',[-2.50,-.64,1.05]],['copier','Copier',[-.23,.29,.95]],['pantry','Pantry',[4.02,-.90,1.39]],
- ['meeting','Meeting room',[1.83,5.02,.99]],['window','Meeting room window',[2.10,9.50,1.89]]
+ ['meeting','Meeting room',[1.83,5.02,.99]],['window','Meeting room window',[2.10,9.50,1.89]],
+ [meetingSignView.id,'Meeting room sign',meetingSignView.art]
 ];
 // Locate future points along the same route used for walking, including its corners.
 export function previewPath(start,waypoints,distances){

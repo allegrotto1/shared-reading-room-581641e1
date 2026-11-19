@@ -1,7 +1,7 @@
 import {enter,readFile,transportHealth} from './storage12.js?v=hotel-15';
 import {Navigation} from './nav-floor.js?v=hotel-15';
 import {CaptureField} from './field.js?v=hotel-15';
-import {lookAt,stepManual,stepGuide,destinations,previewPath} from './guide.js?v=hotel-15';
+import {lookAt,stepManual,stepGuide,destinations,previewPath,meetingSignView} from './guide.js?v=hotel-15b';
 import {SourceTextures} from './textures12.js?v=hotel-15';
 import {projectionMaterial} from './projection12.js?v=hotel-15';
 import {WaterMotion} from './water-motion.js?v=hotel-15';
@@ -114,12 +114,17 @@ function state(timings=true){
   const a=engine._adapter?.info;
   return {eye:[...view.xy,layout.eyeHeight],yaw:view.yaw,pitch:view.pitch,vfov,width:engine.getRenderWidth(),height:engine.getRenderHeight(),backend:engine.name,adapter:a?[a.vendor,a.architecture,a.description].filter(Boolean).join(' / '):engine.getGlInfo?.().renderer,active:sources.active.slice(),resident:sources.cache.size,tiles:[...sources.tiles.keys()],detail:sources.active.filter(id=>sources.cache.get(id)?.detail),zone:nav.zone(view.xy).id,walking:route.points.length>0,waterBumps:water.count,waterAge:water.age(performance.now()),waitEvents,sourceWaitMs:Math.round(waitMs+(waitStart?performance.now()-waitStart:0)),media:timings?{recovered:[...transportHealth.recovered],failed:[...transportHealth.failed]}:undefined,frameTimes:timings?stats.slice():[]};
 }
+function hotelSignTarget(id){
+  if(!isEsgPilot)return null;
+  if(id==='reception')return pilotTarget;
+  return id===meetingSignView.id?meetingSignView.art:null;
+}
 function guide(to,destination=null){
   if(!ready)return;
   const end=nav.safe(to)&&field.reachable(to)?to:nav.nearest(to,.42);
   if(!end||!field.reachable(end))return;
   const points=nav.path(view.xy,end);if(!points||!points.length)return;
-  Object.assign(route,{points,destination,end,autoLook:!!destination,lookTarget:isEsgPilot&&destination==='reception'?pilotTarget:null});
+  Object.assign(route,{points,destination,end,autoLook:!!destination,lookTarget:hotelSignTarget(destination)});
   keys.clear();dirty=true;
 }
 function stop(){route.points=[];keys.clear();water.release();dirty=true;}
@@ -171,14 +176,15 @@ $('#retry').onclick=()=>location.reload();
 async function boot(){
   if(!await enter())return;
   if(isEsgPilot){
-    const {createEsgPilot,signTarget}=await import('./esg-pilot.js?v=hotel-15');
+    const {createEsgPilot,signTarget}=await import('./esg-pilot.js?v=hotel-15b');
     pilotTarget=signTarget;
     pilot=createEsgPilot({canvas,stop,requestDraw:()=>{dirty=true;},go:id=>{setMap(false);guide(layout.targets[id],id);}});
   }
   const [config,dist]=await Promise.all([readFile('layout.json'),readFile('distance-grid.bin.gz').then(unzip),engineBundle()]);
   layout=JSON.parse(new TextDecoder().decode(config));nav=new Navigation(layout.walk);field=new CaptureField(layout,new Uint16Array(dist));
+  if(isEsgPilot&&layout.hotelMedia===2)layout.targets[meetingSignView.id]=meetingSignView.eye;
   const initial=destinations.find(row=>row[0]===qs.get('start')&&row[0]!=='board'&&layout.targets[row[0]]);view.xy=(initial?layout.targets[initial[0]]:layout.spawn).slice();
-  [view.yaw,view.pitch]=lookAt(view.xy,layout.eyeHeight,initial?(isEsgPilot&&initial[0]==='reception'?pilotTarget:initial[2]):(pilotTarget||layout.target));
+  [view.yaw,view.pitch]=lookAt(view.xy,layout.eyeHeight,initial?(hotelSignTarget(initial[0])||initial[2]):(pilotTarget||layout.target));
   if(qs.get('graphics')!=='webgl'&&navigator.gpu&&await B.WebGPUEngine.IsSupportedAsync){
     try{engine=new B.WebGPUEngine(canvas,{antialias:true,powerPreference:'high-performance'});await engine.initAsync();}catch(e){engine?.dispose();engine=null;}
   }

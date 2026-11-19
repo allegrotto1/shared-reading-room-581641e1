@@ -1,3 +1,5 @@
+import {meetingSignView} from './guide.js?v=hotel-15b';
+
 const stations = [
   { id: 'copier', place: 'Copier', title: 'Digital receipts', category: 'Waste', at: [-.45, .42, 1.43], range: 2.05,
     copy: 'At checkout, guests can choose to receive a receipt by email. Printed copies are available on request.' },
@@ -82,7 +84,8 @@ function makeSign(B, scene) {
   // Native meeting plaque faces +X in Blender. The film is on the room side
   // of the entrance glass, below the separate bilingual emergency sign.
   const meeting=face.clone('Meeting room hotel artwork');
-  meeting.position.set(.128,2.05,-3.80);
+  const [meetingX,meetingY,meetingHeight]=meetingSignView.art;
+  meeting.position.set(meetingX,meetingHeight,-meetingY);
   meeting.rotation.y=-Math.PI/2;
   meeting.scaling.set(1.798/w,.438/height,1);
   const door=face.clone('Entrance glass hotel artwork');
