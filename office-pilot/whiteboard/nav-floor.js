@@ -1,8 +1,19 @@
 // A common floor plan drives collision checks, path finding and the minimap.
+function routeLimit(route){
+  const limit=route.width*route.width;
+  const segments=route.paths.flatMap(points=>points.slice(1).map(([x,y],i)=>{
+    const [a,b]=points[i],dx=x-a,dy=y-b;
+    return [a,b,dx,dy,1/(dx*dx+dy*dy)];
+  }));
+  return ([x,y])=>segments.some(([a,b,dx,dy,inv])=>{
+    const t=Math.max(0,Math.min(1,((x-a)*dx+(y-b)*dy)*inv));
+    return (x-a-t*dx)**2+(y-b-t*dy)**2<=limit;
+  });
+}
 export class Navigation {
-  constructor(layout,step=.10){this.layout=layout;this.step=step;this.radius=layout.radius;this.bounds=layout.bounds;this.cols=Math.ceil((this.bounds[2]-this.bounds[0])/step);this.rows=Math.ceil((this.bounds[3]-this.bounds[1])/step);this.free=new Uint8Array(this.cols*this.rows);for(let i=0;i<this.free.length;i++)this.free[i]=+this.safe(this.point(i));}
+  constructor(layout,step=.10){this.layout=layout;this.inRoute=layout.guestRoute?routeLimit(layout.guestRoute):null;this.step=step;this.radius=layout.radius;this.bounds=layout.bounds;this.cols=Math.ceil((this.bounds[2]-this.bounds[0])/step);this.rows=Math.ceil((this.bounds[3]-this.bounds[1])/step);this.free=new Uint8Array(this.cols*this.rows);for(let i=0;i<this.free.length;i++)this.free[i]=+this.safe(this.point(i));}
   inside(p){return this.layout.walkable.some(r=>p[0]>=r[0]&&p[0]<=r[2]&&p[1]>=r[1]&&p[1]<=r[3]);}
-  safe(p){const r=this.radius;if(!this.inside(p))return false;for(let i=0;i<16;i++){const a=i*Math.PI/8;if(!this.inside([p[0]+Math.cos(a)*r,p[1]+Math.sin(a)*r]))return false;}for(const o of this.layout.obstacles){const x=Math.max(o.min[0],Math.min(p[0],o.max[0])),y=Math.max(o.min[1],Math.min(p[1],o.max[1]));if((p[0]-x)**2+(p[1]-y)**2<(r+.008)**2)return false;}return true;}
+  safe(p){const r=this.radius;if((this.inRoute&&!this.inRoute(p))||!this.inside(p))return false;for(let i=0;i<16;i++){const a=i*Math.PI/8;if(!this.inside([p[0]+Math.cos(a)*r,p[1]+Math.sin(a)*r]))return false;}for(const o of this.layout.obstacles){const x=Math.max(o.min[0],Math.min(p[0],o.max[0])),y=Math.max(o.min[1],Math.min(p[1],o.max[1]));if((p[0]-x)**2+(p[1]-y)**2<(r+.008)**2)return false;}return true;}
   point(i){return [this.bounds[0]+(i%this.cols+.5)*this.step,this.bounds[1]+(Math.floor(i/this.cols)+.5)*this.step];}
   cell(p){const c=Math.floor((p[0]-this.bounds[0])/this.step),r=Math.floor((p[1]-this.bounds[1])/this.step);return c<0||r<0||c>=this.cols||r>=this.rows?-1:r*this.cols+c;}
   nearest(p,max=.5){let best=null,d=max*max;for(let i=0;i<this.free.length;i++){if(!this.free[i])continue;const q=this.point(i),dd=(q[0]-p[0])**2+(q[1]-p[1])**2;if(dd<d){best=q;d=dd;}}return best;}

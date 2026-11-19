@@ -40,7 +40,7 @@ export function stepGuide(view,route,nav,dt,height=1.62){
  if(route.autoLook){
    const follow=route.points[0]||target,station=route.destination&&destinations.find(row=>row[0]===route.destination);
    const gap=station?Math.hypot(view.xy[0]-route.end[0],view.xy[1]-route.end[1]):Infinity;
-   if(station&&gap<.62){const [az,el]=lookAt(view.xy,height,station[2]);view.yaw=turn(view.yaw,az,2.8*dt);view.pitch=turn(view.pitch,el,1.25*dt);}
+   if(station&&gap<.62){const [az,el]=lookAt(view.xy,height,route.lookTarget||station[2]);const arrived=route.lookTarget&&!route.points.length;view.yaw=arrived?az:turn(view.yaw,az,2.8*dt);view.pitch=arrived?el:turn(view.pitch,el,1.25*dt);}
    else if(Math.hypot(follow[0]-view.xy[0],follow[1]-view.xy[1])>.015){
      view.yaw=turn(view.yaw,Math.atan2(follow[0]-view.xy[0],follow[1]-view.xy[1]),2.8*dt);
      view.pitch=turn(view.pitch,-.075,1.25*dt);

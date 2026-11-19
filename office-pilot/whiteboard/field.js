@@ -17,7 +17,7 @@ export function compactWeights(items){
 }
 export class CaptureField{
   constructor(layout,distances){
-    this.locations=layout.anchors;this.grid=layout.grid;this.rows=layout.referenceTriangles;this.distances=distances;
+    this.locations=layout.anchors;this.grid=layout.grid;this.rows=layout.referenceTriangles;this.distances=distances;this.referenceGuard=layout.referenceGuard??7;
     const e=new Map();
     for(const tri of this.rows)for(let i=0;i<3;i++){const pair=[tri[i],tri[(i+1)%3]].sort((a,b)=>a-b),k=pair.join('/');if(e.has(k))e.delete(k);else e.set(k,pair);}
     this.border=[...e.values()];
@@ -37,7 +37,7 @@ export class CaptureField{
     for(const ids of this.rows){
       const ww=triangleWeights(p,ids,this.locations);
       if(ww.every(w=>w>=-1e-6)){
-        const ret=new Map([[7,.0007]]);
+        const ret=new Map([[this.referenceGuard,.0007]]);
         ids.forEach((id,i)=>ret.set(id,(ret.get(id)||0)+Math.max(0,ww[i])));
         return ret;
       }

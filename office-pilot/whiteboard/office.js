@@ -1,8 +1,8 @@
-import {enter,readFile,transportHealth} from './storage12.js';
-import {Navigation} from './nav-floor.js';
-import {CaptureField} from './field.js';
-import {lookAt,stepManual,stepGuide,destinations,previewPath} from './guide.js';
-import {SourceTextures} from './textures12.js';
+import {enter,readFile,transportHealth} from './storage12.js?v=guest-1';
+import {Navigation} from './nav-floor.js?v=guest-1';
+import {CaptureField} from './field.js?v=guest-1';
+import {lookAt,stepManual,stepGuide,destinations,previewPath} from './guide.js?v=guest-1';
+import {SourceTextures} from './textures12.js?v=guest-1';
 import {projectionMaterial} from './projection12.js';
 import {WaterMotion} from './water-motion.js';
 const $=sel=>document.querySelector(sel),canvas=$('#scene'),qs=new URLSearchParams(location.search),keys=new Set();
@@ -109,7 +109,7 @@ function guide(to,destination=null){
   const end=nav.safe(to)&&field.reachable(to)?to:nav.nearest(to,.42);
   if(!end||!field.reachable(end))return;
   const points=nav.path(view.xy,end);if(!points||!points.length)return;
-  Object.assign(route,{points,destination,end,autoLook:!!destination});
+  Object.assign(route,{points,destination,end,autoLook:!!destination,lookTarget:isEsgPilot&&destination==='reception'?pilotTarget:null});
   keys.clear();dirty=true;
 }
 function stop(){route.points=[];keys.clear();water.release();dirty=true;}
@@ -120,7 +120,7 @@ function setupMap(){
   const g=mapImage.getContext('2d');
   for(const zone of layout.walk.zones){const [l,b,r,t]=zone.rect,[x,y]=mapPos(l,t);g.fillStyle='#3c4552';g.fillRect(x,y,(r-l)*scale,(t-b)*scale);}
   for(const o of layout.walk.obstacles){const [l,b]=o.min,[r,t]=o.max,[x,y]=mapPos(l,t);const wall=o.group?.includes('Architecture');g.fillStyle=wall?'#c4c7c5':'#657079';g.fillRect(x,y,Math.max(1,(r-l)*scale),Math.max(1,(t-b)*scale));}
-  for(const row of destinations){const btn=document.createElement('button');btn.type='button';btn.textContent=row[1];btn.dataset.go=row[0];btn.onclick=()=>{
+  for(const row of destinations){if(!layout.targets[row[0]])continue;const btn=document.createElement('button');btn.type='button';btn.textContent=isEsgPilot&&row[0]==='reception'?'Hotel sign':row[1];btn.dataset.go=row[0];btn.onclick=()=>{
     guide(layout.targets[row[0]],row[0]);if(mobile)setMap(false);
   };$('#places').append(btn);}
 }
@@ -159,22 +159,16 @@ for(const b of document.querySelectorAll('[data-key]')){
 }
 $('#retry').onclick=()=>location.reload();
 async function boot(){
-  if(!await enter(false,!isEsgPilot)){
-    if(isEsgPilot){
-      $('#loading').hidden=true;$('#esg-locked').hidden=false;
-      addEventListener('pageshow',e=>{if(e.persisted)location.reload();});
-    }
-    return;
-  }
+  if(!await enter())return;
   if(isEsgPilot){
-    const {createEsgPilot,signTarget}=await import('./esg-pilot.js');
+    const {createEsgPilot,signTarget}=await import('./esg-pilot.js?v=guest-1');
     pilotTarget=signTarget;
     pilot=createEsgPilot({canvas,stop,requestDraw:()=>{dirty=true;},go:id=>{setMap(false);guide(layout.targets[id],id);}});
   }
   const [config,dist]=await Promise.all([readFile('layout.json'),readFile('distance-grid.bin.gz').then(unzip),engineBundle()]);
   layout=JSON.parse(new TextDecoder().decode(config));nav=new Navigation(layout.walk);field=new CaptureField(layout,new Uint16Array(dist));
-  const initial=destinations.find(row=>row[0]===qs.get('start')&&row[0]!=='board');view.xy=(initial?layout.targets[initial[0]]:layout.spawn).slice();
-  [view.yaw,view.pitch]=lookAt(view.xy,layout.eyeHeight,initial?initial[2]:(pilotTarget||layout.target));
+  const initial=destinations.find(row=>row[0]===qs.get('start')&&row[0]!=='board'&&layout.targets[row[0]]);view.xy=(initial?layout.targets[initial[0]]:layout.spawn).slice();
+  [view.yaw,view.pitch]=lookAt(view.xy,layout.eyeHeight,initial?(isEsgPilot&&initial[0]==='reception'?pilotTarget:initial[2]):(pilotTarget||layout.target));
   if(qs.get('graphics')!=='webgl'&&navigator.gpu&&await B.WebGPUEngine.IsSupportedAsync){
     try{engine=new B.WebGPUEngine(canvas,{antialias:true,powerPreference:'high-performance'});await engine.initAsync();}catch(e){engine?.dispose();engine=null;}
   }

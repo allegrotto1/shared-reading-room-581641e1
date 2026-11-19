@@ -1,5 +1,5 @@
 <!doctype html>
-<html data-protected data-esg-pilot lang="en">
+<html data-public-hotel data-esg-pilot lang="en">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
@@ -10,7 +10,10 @@
 <link rel="icon" href="data:,">
 <link rel="stylesheet" href="./full.css">
 <link rel="stylesheet" href="./esg-pilot.css">
-<title>Hotel study preview</title>
+<meta property="og:type" content="website">
+<meta property="og:title" content="Hotel ESG interaction demo">
+<meta property="og:description" content="Try the changing hotel sign and three ESG information pop-ups.">
+<title>Hotel ESG interaction demo</title>
 </head>
 <body>
 <main id="viewer">
@@ -33,19 +36,11 @@
   </div>
 
   <div id="loading" role="status"><div class="load-panel"><span id="status">Opening the walkthrough…</span><progress aria-label="Loading progress" max="100" value="4"></progress><button id="retry" hidden>Try again</button></div></div>
-  <div id="esg-locked" hidden>
-    <section class="esg-panel" aria-labelledby="esg-locked-title">
-      <p class="esg-kicker">Hotel study preview</p>
-      <h1 id="esg-locked-title">Unlock Research Studio</h1>
-      <p>This preview uses the studio’s existing access. Open Research Studio in this tab, then use Back to return here.</p>
-      <a class="esg-primary" href="../../">Open Research Studio</a>
-    </section>
-  </div>
 
   <dialog id="esg-welcome" class="esg-panel" aria-labelledby="esg-title">
     <p class="esg-kicker">Interaction preview</p>
     <h1 id="esg-title">Hotel study preview</h1>
-    <p>See how your answer changes a sign in the scene. Then explore three examples of ESG information during the walkthrough.</p>
+    <p>Choose a hotel to see its sign at reception. Use <strong>Demo guide</strong> to try the three ESG pop-ups in this office walkthrough.</p>
     <div id="esg-start-options" role="group" aria-labelledby="esg-brand-question">
       <p id="esg-brand-question">Which hotel would you choose?</p>
       <button type="button" data-brand-enter="aster" class="esg-primary">Aster Quay Hotel</button>
@@ -72,6 +67,6 @@
     </div>
   </dialog>
 </main>
-<script type="module" src="./office.js"></script>
+<script type="module" src="./office.js?v=guest-1"></script>
 </body>
 </html>

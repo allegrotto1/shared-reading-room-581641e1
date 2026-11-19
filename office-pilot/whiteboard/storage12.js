@@ -1,4 +1,11 @@
-const sealed=document.documentElement.hasAttribute('data-protected');
+const doc=document.documentElement;
+const sealed=doc.hasAttribute('data-protected');
+const guest=!sealed&&doc.hasAttribute('data-public-hotel');
+const guestBase=new URL('./hotel-demo/v1/',import.meta.url);
+const guestRevision='4aed2e13d198b7c7a2a6f99948ae47aa281efffc';
+const guestRepo='allegrotto1/shared-reading-room-581641e1';
+const guestFolder='office-pilot/whiteboard/hotel-demo/v1/';
+const guestAsset=/^(?:(?:layout\.json|(?:geometry|distance-grid)\.bin\.gz)|(?:board|world)\.png|floor-[0-3]\.bin\.gz|(?:exterior|branches|world-right)\.webp|view-\d{2}(?:\.webp|-depth\.bin\.gz))$/;
 const base=new URL('../../',location.href);
 const encoder=new TextEncoder();
 let key,table;
@@ -19,10 +26,17 @@ export async function enter(proof=false,redirect=true){
   table=(await import('./catalog12.js')).files;return true;
 }
 export async function readFile(id){
+  if(guest&&!guestAsset.test(id))throw Error('This file is not part of the hotel demo');
   const row=sealed?table[id]:null;
   if(sealed&&!row)throw Error('This office file is missing from the catalog');
-  const uri=sealed?new URL(row[0],location.href):new URL('./data/'+id,location.href);
+  const uri=sealed?new URL(row[0],location.href):guest?new URL(id,guestBase):new URL('./data/'+id,location.href);
   const endpoints=[{url:uri}];
+  if(guest){
+    const raw=new URL('https://raw.githubusercontent.com/'+guestRepo+'/'+guestRevision+'/'+guestFolder+id);
+    const edge=new URL('https://cdn.jsdelivr.net/gh/'+guestRepo+'@'+guestRevision+'/'+guestFolder+id);
+    const local=['localhost','127.0.0.1','[::1]'].includes(location.hostname);
+    if(!local)endpoints.splice(0,endpoints.length,{url:edge},{url:raw});
+  }
   if(sealed){
     // Every URL identifies the same immutable ciphertext. Authentication always happens in the browser.
     const [owner,repo,revision,...path]=uri.pathname.slice(1).split('/');
