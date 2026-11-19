@@ -64,9 +64,11 @@ export class SourceTextures{
   }
   exterior(){
     if(this.street)return this.street;
-    this.street=Promise.all([this.colour('exterior.webp'),this.colour('branches.webp')]).then(([city,leaves])=>{
+    this.street=Promise.all([this.colour('exterior.webp'),this.colour('branches.webp'),
+      this.colour('world-right.webp').catch(()=>null)]).then(([city,leaves,right])=>{
       city.wrapU=leaves.wrapU=this.B.Texture.CLAMP_ADDRESSMODE;
       this.mat.setTexture('streetPhoto',city);this.mat.setTexture('leafPhoto',leaves);this.mat.setFloat('streetReady',1);
+      if(right){this.rightWorld=right;this.mat.setTexture('exteriorWorld',right);this.mat.setFloat('rightStreetReady',1);}
       this.redraw();
     }).catch(e=>{this.street=null;this.retry.set('street',performance.now()+3500);throw e;});
     return this.street;

@@ -3,10 +3,11 @@ const base=new URL('../../',location.href);
 const encoder=new TextEncoder();
 let key,table;
 export const transportHealth={recovered:new Set(),failed:new Set()};
-export async function enter(proof=false){
+export async function enter(proof=false,redirect=true){
   if(!sealed)return true;
   const secret=sessionStorage.getItem('studio-session:'+base.pathname);
   if(!secret || !/^[\w-]{43}$/.test(secret)){
+    if(!redirect)return false;
     const query=new URLSearchParams(location.search),start=query.get('start');
     const destinations={plant:'office-plant',window:'office-window',meeting:'office-meeting',copier:'office-copier',pantry:'office-pantry',office:'office-desks',reception:'office-entrance'};
     base.hash='view='+(proof?'office-full-proof':query.has('device')?'office-board-device':destinations[start]||'office-whiteboard');

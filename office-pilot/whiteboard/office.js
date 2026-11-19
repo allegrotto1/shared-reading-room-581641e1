@@ -4,8 +4,12 @@ import {CaptureField} from './field.js';
 import {lookAt,stepManual,stepGuide,destinations,previewPath} from './guide.js';
 import {SourceTextures} from './textures12.js';
 import {projectionMaterial} from './projection12.js';
+import {WaterMotion} from './water-motion.js';
 const $=sel=>document.querySelector(sel),canvas=$('#scene'),qs=new URLSearchParams(location.search),keys=new Set();
 let vfov=Math.PI/3;
+const isEsgPilot=document.documentElement.hasAttribute('data-esg-pilot');
+let pilot,pilotTarget;
+const water=new WaterMotion();let waterWasActive=false;
 const view={xy:[],yaw:0,pitch:0},route={points:[]},mobile=matchMedia('(pointer:coarse)').matches;
 let B,engine,scene,cam,geo,material,layout,nav,field,sources,drag,ready=false,manual=false,dirty=true,last=0,lastDraw=null,stats=[],mapImage;
 const unzip=bytes=>new Response(new Blob([bytes]).stream().pipeThrough(new DecompressionStream('gzip'))).arrayBuffer();
@@ -31,6 +35,7 @@ function geometry(buffer){
   geo.material=material;geo.freezeWorldMatrix();
   const sky=B.MeshBuilder.CreateSphere('Exterior rays',{diameter:1400,segments:12},scene);
   sky.setVerticesData('boardFace',new Float32Array(sky.getTotalVertices()).fill(-1),false,1);sky.material=material;sky.isPickable=false;sky.freezeWorldMatrix();
+  pilot?.mount(B,scene,pos,index,layout.eyeHeight);
 }
 
 function aim(){
@@ -39,8 +44,9 @@ function aim(){
   cam.fov=vfov;material.setVector3('visitorEye',new B.Vector3(x,h,-y));
 }
 function draw(settled=false){
-  dirty=false;aim();if(sources.bind(view.xy,settled))dirty=true;
+  dirty=false;aim();material.setFloat('waterRipple',water.age(performance.now()));if(sources.bind(view.xy,settled))dirty=true;
   engine.beginFrame();try{scene.render();}finally{engine.endFrame();}
+  pilot?.draw(cam,scene,engine);
   $('#place').textContent=nav.zone(view.xy).label;$('#stop').hidden=!route.points.length;mapUpdate();
 }
 let waitStart=0,waitMs=0,waitEvents=0,blocked=false,wholeTimingRun=false;
@@ -72,14 +78,23 @@ function step(dt){
   }else sources?.predict(null);
   if(waitStart){waitMs+=performance.now()-waitStart;waitStart=0;if(blocked){$('#hint').textContent='Drag to look · Tap to walk';blocked=false;}}
 
-  if(stepManual(view,keys,nav,dt)){route.points=[];dirty=true;}
-  else if(route.points.length){stepGuide(view,route,nav,dt,layout.eyeHeight);dirty=true;}
+  const previous=view.xy.slice(),a=view.yaw;
+  const front=Number(keys.has('w')||keys.has('arrowup'))-Number(keys.has('s')||keys.has('arrowdown'));
+  const side=Number(keys.has('d')||keys.has('arrowright'))-Number(keys.has('a')||keys.has('arrowleft'));
+  if(stepManual(view,keys,nav,dt)){
+    water.observe(previous,view.xy,[front*Math.sin(a)+side*Math.cos(a),front*Math.cos(a)-side*Math.sin(a)],dt*(keys.has('shift')?1.50:.92),performance.now());
+    route.points=[];dirty=true;
+  }else{
+    water.release();
+    if(route.points.length){stepGuide(view,route,nav,dt,layout.eyeHeight);dirty=true;}
+  }
 }
 function frame(now){
   const elapsed=now-last;last=now;
   if(ready&&!manual){
     const moving=Boolean(keys.size||drag||route.points.length);
-    step(Math.min(.060,elapsed/1000));
+    if(!pilot?.blocksMovement())step(Math.min(.060,elapsed/1000));
+    const movingWater=water.age(now)>=0;if(movingWater||waterWasActive)dirty=true;waterWasActive=movingWater;
     if(!moving)lastDraw=null;
     if(dirty){if(moving&&lastDraw!==null){stats.push(now-lastDraw);if(!wholeTimingRun&&stats.length>3000)stats.shift();}draw();if(moving)lastDraw=now;}
   }
@@ -87,7 +102,7 @@ function frame(now){
 }
 function state(timings=true){
   const a=engine._adapter?.info;
-  return {eye:[...view.xy,layout.eyeHeight],yaw:view.yaw,pitch:view.pitch,vfov,width:engine.getRenderWidth(),height:engine.getRenderHeight(),backend:engine.name,adapter:a?[a.vendor,a.architecture,a.description].filter(Boolean).join(' / '):engine.getGlInfo?.().renderer,active:sources.active.slice(),resident:sources.cache.size,tiles:[...sources.tiles.keys()],zone:nav.zone(view.xy).id,walking:route.points.length>0,waitEvents,sourceWaitMs:Math.round(waitMs+(waitStart?performance.now()-waitStart:0)),media:timings?{recovered:[...transportHealth.recovered],failed:[...transportHealth.failed]}:undefined,frameTimes:timings?stats.slice():[]};
+  return {eye:[...view.xy,layout.eyeHeight],yaw:view.yaw,pitch:view.pitch,vfov,width:engine.getRenderWidth(),height:engine.getRenderHeight(),backend:engine.name,adapter:a?[a.vendor,a.architecture,a.description].filter(Boolean).join(' / '):engine.getGlInfo?.().renderer,active:sources.active.slice(),resident:sources.cache.size,tiles:[...sources.tiles.keys()],zone:nav.zone(view.xy).id,walking:route.points.length>0,waterBumps:water.count,waterAge:water.age(performance.now()),waitEvents,sourceWaitMs:Math.round(waitMs+(waitStart?performance.now()-waitStart:0)),media:timings?{recovered:[...transportHealth.recovered],failed:[...transportHealth.failed]}:undefined,frameTimes:timings?stats.slice():[]};
 }
 function guide(to,destination=null){
   if(!ready)return;
@@ -97,7 +112,7 @@ function guide(to,destination=null){
   Object.assign(route,{points,destination,end,autoLook:!!destination});
   keys.clear();dirty=true;
 }
-function stop(){route.points=[];keys.clear();dirty=true;}
+function stop(){route.points=[];keys.clear();water.release();dirty=true;}
 const map=$('#floorMap'),body=$('#planBody');
 const scale=23,mapPos=(x,y)=>[64+(x+4.75)*scale,12+(9.65-y)*scale];
 function setupMap(){
@@ -128,12 +143,15 @@ canvas.addEventListener('pointermove',e=>{
 canvas.addEventListener('pointerup',e=>{
  if(!drag||e.pointerId!==drag.id)return;
  if(!drag.moved&&!drag.wasWalking){const r=canvas.getBoundingClientRect(),hit=scene.pick(e.clientX-r.left,e.clientY-r.top,m=>m===geo);
- if(hit?.pickedPoint&&hit.pickedPoint.y<.18)guide([hit.pickedPoint.x,-hit.pickedPoint.z]);}
+ if(hit?.pickedPoint){
+   if(hit.pickedPoint.y<.18)guide([hit.pickedPoint.x,-hit.pickedPoint.z]);
+   else if(water.tap(hit.pickedPoint,view.xy,performance.now()))dirty=true;
+ }}
  drag=null;
 });
 canvas.addEventListener('pointercancel',()=>drag=null);
 const allowed=new Set(['w','a','s','d','q','e','shift','arrowup','arrowdown','arrowleft','arrowright']);
-addEventListener('keydown',e=>{if(!ready||e.altKey||e.ctrlKey||e.metaKey)return;const k=e.key.toLowerCase();if(k==='escape'){stop();setMap(false);return;}if(allowed.has(k)){e.preventDefault();keys.add(k);route.points=[];}});
+addEventListener('keydown',e=>{if(!ready||pilot?.blocksMovement()||e.altKey||e.ctrlKey||e.metaKey)return;const k=e.key.toLowerCase();if(k==='escape'){stop();setMap(false);return;}if(allowed.has(k)){e.preventDefault();keys.add(k);route.points=[];}});
 addEventListener('keyup',e=>keys.delete(e.key.toLowerCase()));addEventListener('blur',()=>{keys.clear();drag=null;});
 for(const b of document.querySelectorAll('[data-key]')){
  b.onpointerdown=e=>{if(!ready)return;e.preventDefault();route.points=[];b.setPointerCapture(e.pointerId);keys.add(b.dataset.key);};
@@ -141,11 +159,22 @@ for(const b of document.querySelectorAll('[data-key]')){
 }
 $('#retry').onclick=()=>location.reload();
 async function boot(){
-  if(!await enter())return;
+  if(!await enter(false,!isEsgPilot)){
+    if(isEsgPilot){
+      $('#loading').hidden=true;$('#esg-locked').hidden=false;
+      addEventListener('pageshow',e=>{if(e.persisted)location.reload();});
+    }
+    return;
+  }
+  if(isEsgPilot){
+    const {createEsgPilot,signTarget}=await import('./esg-pilot.js');
+    pilotTarget=signTarget;
+    pilot=createEsgPilot({canvas,stop,requestDraw:()=>{dirty=true;},go:id=>{setMap(false);guide(layout.targets[id],id);}});
+  }
   const [config,dist]=await Promise.all([readFile('layout.json'),readFile('distance-grid.bin.gz').then(unzip),engineBundle()]);
   layout=JSON.parse(new TextDecoder().decode(config));nav=new Navigation(layout.walk);field=new CaptureField(layout,new Uint16Array(dist));
   const initial=destinations.find(row=>row[0]===qs.get('start')&&row[0]!=='board');view.xy=(initial?layout.targets[initial[0]]:layout.spawn).slice();
-  [view.yaw,view.pitch]=lookAt(view.xy,layout.eyeHeight,initial?initial[2]:layout.target);
+  [view.yaw,view.pitch]=lookAt(view.xy,layout.eyeHeight,initial?initial[2]:(pilotTarget||layout.target));
   if(qs.get('graphics')!=='webgl'&&navigator.gpu&&await B.WebGPUEngine.IsSupportedAsync){
     try{engine=new B.WebGPUEngine(canvas,{antialias:true,powerPreference:'high-performance'});await engine.initAsync();}catch(e){engine?.dispose();engine=null;}
   }
@@ -158,14 +187,15 @@ async function boot(){
   material=projectionMaterial(B,scene,engine.isWebGPU===true);
   sources=new SourceTextures(B,scene,material,field,mobile,()=>dirty=true);loading('Loading nearby Cycles views…',28);
   const [mesh,ink,world]=await Promise.all([readFile('geometry.bin.gz').then(unzip),sources.colour('board.png'),sources.colour('world.png'),sources.settle(view.xy,false)]);
-  geometry(mesh);material.setTexture('inkBoard',ink);material.setTexture('exteriorWorld',world);
+  geometry(mesh);material.setTexture('inkBoard',ink);material.setTexture('exteriorWorld',sources.rightWorld||world);
   setupMap();loading('Aligning the view…',88);aim();sources.bind(view.xy,true);
-  await material.forceCompilationAsync(geo);draw(true);
+  await Promise.all([material.forceCompilationAsync(geo),pilot?.prepare()]);draw(true);
   if(gpuDevice){
     await gpuDevice.queue.onSubmittedWorkDone();
     if(await gpuDevice.popErrorScope()){const retry=new URL(location.href);retry.searchParams.set('graphics','webgl');location.replace(retry);return;}
   }
   ready=true;$('#loading').hidden=true;document.body.dataset.ready='true';
+  pilot?.loaded();
   addEventListener('resize',()=>{engine.resize();dirty=true;});
   if(qs.has('review')){
     window.officeQA={state,resetTimes:()=>{stats=[];lastDraw=null;wholeTimingRun=true;},freeze:(hide=true)=>{manual=true;stop();$('#viewer').classList.toggle('measuring',hide);},
@@ -180,4 +210,4 @@ async function boot(){
    update();setInterval(update,500);}
   last=performance.now();requestAnimationFrame(frame);
 }
-boot().catch(e=>{console.error(e);loading('The office could not load. Please try again.',0);$('#retry').hidden=false;document.body.dataset.error=String(e);});
+boot().catch(e=>{console.error(e);pilot?.loadError();loading('The office could not load. Please try again.',0);$('#retry').hidden=false;document.body.dataset.error=String(e);});
