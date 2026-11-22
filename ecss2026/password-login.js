@@ -17,7 +17,11 @@ async function openShare(){
  try{
   if(!/^[A-Za-z0-9_-]{43}$/.test(secret))throw Error('invalid link');
   const key=await crypto.subtle.importKey('raw',bytes(secret),'AES-GCM',false,['decrypt']);
-  const zipped=await crypto.subtle.decrypt({name:'AES-GCM',iv:bytes(payload.iv)},key,bytes(payload.data));
+  const section=new URLSearchParams(location.hash.slice(1)).get('section')||'read';
+  const asset=section==='read'?payload.reader:payload.workspace;
+  const response=asset?await fetch(asset):null;if(response&&!response.ok)throw Error('load failed');
+  const envelope=response?await response.json():payload;
+  const zipped=await crypto.subtle.decrypt({name:'AES-GCM',iv:bytes(envelope.iv)},key,bytes(envelope.data));
   const html=await new Response(new Blob([zipped]).stream().pipeThrough(new DecompressionStream('gzip'))).text();
   try{sessionStorage.setItem(slot,secret);sessionStorage.removeItem(slot+':locked');}catch{}
   const h=new URLSearchParams(location.hash.slice(1));h.set('key',secret);if(!h.has('view'))h.set('view','projects');
@@ -27,4 +31,5 @@ async function openShare(){
 }
 window.addEventListener('hashchange',openShare);openShare();
 })();
+
 
