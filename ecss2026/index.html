@@ -1,6 +1,30 @@
-<!doctype html><html lang="zh-Hant"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="robots" content="noindex,nofollow,noarchive"><meta name="referrer" content="no-referrer"><title>Research Studio · 登入</title><style>
-*{box-sizing:border-box}body{margin:0;min-height:100dvh;background:#f6f8f5;color:#183b38;font-family:Manrope,system-ui,"Microsoft JhengHei",sans-serif;display:grid;place-items:center;padding:24px}main{width:100%;max-width:440px}.brand{display:flex;align-items:center;gap:12px;margin-bottom:48px;font-size:16px;font-weight:600}.mark{width:40px;height:40px;border:1px solid #245c50;border-radius:8px;display:grid;place-items:center;font-size:24px;font-weight:400}h1{font-size:30px;line-height:36px;font-weight:500;margin:0 0 16px;text-wrap:balance}.intro{color:#637570;font-size:16px;line-height:24px;margin:0 0 32px}form{padding:32px;background:#fff;border:1px solid #d3dfd9;border-radius:12px}label{display:block;font-size:14px;line-height:20px;margin-bottom:8px;font-weight:600}.field{position:relative}input{width:100%;height:48px;padding:12px 80px 12px 12px;border:1px solid #a6bbb2;border-radius:8px;background:#fff;color:#183b38;font:16px/24px inherit;font-size:16px}button{font:600 16px/24px Manrope,system-ui,sans-serif;cursor:pointer;border:0;border-radius:8px;padding:12px;background:#245c50;color:#fff}#show{position:absolute;right:4px;top:4px;height:40px;background:transparent;color:#245c50;font-size:14px;padding:8px 12px}#submit{width:100%;margin-top:24px;min-height:48px}button:hover{background:#194a40}#show:hover{background:#e9f0eb}button:active{transform:translateY(1px)}button:focus-visible,input:focus-visible{outline:3px solid #789b8e;outline-offset:3px}button:disabled{cursor:wait;opacity:.65}#status{font-size:14px;line-height:20px;min-height:40px;margin:16px 0 0;color:#637570}#status[data-error="true"]{color:#9b3838}.foot{font-size:12px;line-height:20px;color:#637570;margin:24px 0 0}noscript{display:block;color:#9b3838;margin-top:16px}@media(max-width:480px){form{padding:24px}.brand{margin-bottom:32px}}
-</style></head><body><main><div class="brand">Research Studio</div><h1>開啟研究</h1><p class="intro">使用研究分享連結直接閱讀。</p><p id="status" role="status" aria-live="polite">正在檢查分享連結…</p><noscript>請啟用 JavaScript 以閱讀研究。</noscript></main><script>
-const payload={"reader":"paper-reader-20261122.enc.json","workspace":"model-workspace-20261122.enc.json"};
-
-</script><script src="./password-login.js?v=20261122-light-reader"></script></body></html>
+<!doctype html>
+<html lang="zh-Hant-HK">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="robots" content="noindex,nofollow,noarchive">
+  <meta name="referrer" content="no-referrer">
+  <title>Research Studio · 開啟研究</title>
+  <style id="share-style">
+    * { box-sizing: border-box; }
+    body { margin: 0; min-height: 100vh; min-height: 100dvh; padding: 24px; display: grid;
+      place-items: center; background: #f7f6f0; color: #173f39; font: 16px/1.6 system-ui, sans-serif; }
+    main { max-width: 28rem; width: 100%; }
+    h1 { margin: 14px 0 12px; font-size: 30px; }
+    p { margin: 0 0 14px; }
+    button { color: #173f39; background: #fff; border: 1px solid #82998a; border-radius: 4px;
+      padding: 8px 14px; font: inherit; }
+  </style>
+</head>
+<body>
+  <main>
+    <p>Research Studio</p>
+    <h1>誰是落選者</h1>
+    <p id="share-status" role="status">正在檢查分享連結…</p>
+    <button id="share-retry" hidden>重試</button>
+    <noscript>請啟用 JavaScript 以閱讀研究。</noscript>
+  </main>
+  <script src="studio-loader.js?v=20261122-flow1" data-bundle="studio-flow-20261122"></script>
+</body>
+</html>
